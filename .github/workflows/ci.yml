@@ -28,7 +28,7 @@ jobs:
           enable-cache: true
 
       - name: Sincronizar entorno
-        run: uv sync --group dev
+        run: uv sync --extra caso_b --extra serving --group dev
 
       - name: Lint (ruff)
         run: uv run ruff check src tests
