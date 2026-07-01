@@ -1,0 +1,27 @@
+# Configuración de kedro-mlflow (tracking + registry local por defecto).
+# En producción, `tracking.mlflow_tracking_uri` apunta al servidor MLflow.
+server:
+  mlflow_tracking_uri: mlruns          # file store local; override en conf/local o prod
+  mlflow_registry_uri: null
+  credentials: null
+
+tracking:
+  disable_tracking:
+    pipelines: []
+  experiment:
+    name: tostao-retail-ml
+    restore_if_deleted: true
+  run:
+    id: null
+    name: null
+    nested: true
+  params:
+    dict_params:
+      flatten: true
+      recursive: true
+      sep: "."
+    long_params_strategy: truncate
+
+ui:
+  port: "5000"
+  host: "127.0.0.1"

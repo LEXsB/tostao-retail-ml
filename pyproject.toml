@@ -105,7 +105,9 @@ extend-exclude = ["notebooks", "data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "PD", "NPY", "RUF"]
-ignore = ["E501", "PD901", "N803", "N806"]
+# RUF001/2/3: el código está en español (acentos, «», →) y usa notación
+# matemática (ρ, ∞, η); los avisos de "confusables" serían ruido constante.
+ignore = ["E501", "N803", "N806", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["N802", "N803", "S101"]
