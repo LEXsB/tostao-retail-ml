@@ -41,6 +41,8 @@ class CaseCResult:
     predictive_metrics: dict[str, float]
     predictive_test: pd.DataFrame
     narrative: Narrative = field(default_factory=Narrative)
+    predictive_model: object = None
+    predictive_features: pd.DataFrame | None = None
 
 
 def _design_matrix(df: pd.DataFrame, num: list[str], cat: list[str]) -> pd.DataFrame:
@@ -84,7 +86,7 @@ def inferential_drivers(master_c: pd.DataFrame) -> tuple[pd.DataFrame, dict[str,
 
 def predictive_spend(
     master_c: pd.DataFrame, *, seed: int = 42
-) -> tuple[dict[str, float], pd.DataFrame, Narrative]:
+) -> tuple[dict[str, float], pd.DataFrame, GBRRegressionModel, pd.DataFrame, Narrative]:
     """Modelo predictivo del gasto esperado del cliente recurrente (features RFM + loyalty)."""
     rfm = RFMTransformer("id_cliente", "fecha", TARGET, score=False).fit_transform(master_c)
     profile = master_c.groupby("id_cliente", observed=True).agg(
@@ -131,14 +133,24 @@ def predictive_spend(
             title="Predicción de gasto",
         )
     )
-    return report, test, narrative
+    return report, test, model, feat[~mask], narrative
 
 
 def run_case_c(master_c: pd.DataFrame, *, seed: int = 42) -> CaseCResult:
     """Ejecuta el Caso C completo: drivers inferenciales + gasto esperado."""
     coefs, inf_metrics, inf_narr = inferential_drivers(master_c)
-    pred_metrics, pred_test, pred_narr = predictive_spend(master_c, seed=seed)
+    pred_metrics, pred_test, pred_model, pred_feat, pred_narr = predictive_spend(
+        master_c, seed=seed
+    )
     narrative = Narrative()
     narrative.extend(inf_narr)
     narrative.extend(pred_narr)
-    return CaseCResult(coefs, inf_metrics, pred_metrics, pred_test, narrative)
+    return CaseCResult(
+        coefs,
+        inf_metrics,
+        pred_metrics,
+        pred_test,
+        narrative,
+        predictive_model=pred_model,
+        predictive_features=pred_feat,
+    )

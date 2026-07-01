@@ -6,6 +6,19 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Sin publicar]
 
+### Cambiado
+- **Reportes rehechos a fondo** (calidad EDA + presentación): tipado que ahora
+  clasifica IDs de alta cardinalidad como identificadores (excluidos del describe);
+  estadística univariada **separada** en numéricas (media/mediana/std/CV/skew/
+  kurtosis/percentiles/outliers/normalidad) y categóricas (cardinalidad/moda/
+  entropía); **apertura de cada feature por la variable objetivo** (§4.3) —el
+  target continuo se discretiza en Bajo/Medio/Alto— con box/violín, composición
+  100% apilada, dispersión+tendencia y tests con tamaño de efecto; correlaciones
+  Pearson+Spearman, VIF y pares redundantes; **reporte por caso completo**
+  (EDA+modelado+interpretabilidad SHAP/coeficientes+negocio) y **glosario** que
+  explica cada métrica. Plantilla HTML con paleta profesional y **tablas con scroll
+  (sin desbordes)**. Reportes reales: ~50 figuras Plotly por caso.
+
 ### Añadido
 - Scaffolding inicial del proyecto Kedro `tostao-retail-ml`: layout `src/`,
   configuración de entorno reproducible con `uv`, herramientas de calidad
