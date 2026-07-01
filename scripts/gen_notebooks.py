@@ -20,41 +20,49 @@ NB_DIR = Path("notebooks")
 
 def _save(nb: nbf.NotebookNode, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    nb.metadata["kernelspec"] = {"name": "python3", "display_name": "Python 3", "language": "python"}
+    nb.metadata["kernelspec"] = {
+        "name": "python3",
+        "display_name": "Python 3",
+        "language": "python",
+    }
     nbf.write(nb, str(path))
 
 
 def setup_notebook() -> nbf.NotebookNode:
-    return new_notebook(cells=[
-        new_markdown_cell(
-            "# 00 · Setup del entorno\n\n"
-            "Verifico el entorno, abro la sesión de Kedro y confirmo que el catálogo "
-            "expone las 12 fuentes crudas. Todos los notebooks parten de aquí."
-        ),
-        new_code_cell(
-            "from pathlib import Path\n"
-            "from kedro.framework.session import KedroSession\n"
-            "from kedro.framework.startup import bootstrap_project\n"
-            "import tostao_ml\n\n"
-            "PROJECT = Path.cwd().parent if Path.cwd().name == 'notebooks' else Path.cwd()\n"
-            "bootstrap_project(PROJECT)\n"
-            "print('tostao_ml', tostao_ml.__version__)"
-        ),
-        new_code_cell(
-            "with KedroSession.create(project_path=PROJECT) as session:\n"
-            "    catalog = session.load_context().catalog\n"
-            "    datasets = [d for d in catalog.list() if d.startswith(('a_', 'b_', 'c_'))]\n"
-            "datasets"
-        ),
-        new_markdown_cell(
-            "**Conclusión.** El entorno reproducible (Python 3.13 + uv) está listo y el "
-            "catálogo tipa las 12 fuentes crudas por caso. A partir de aquí, cada caso "
-            "construye su **tabla maestra** cruzando sus fuentes y hace el EDA sobre ella."
-        ),
-    ])
+    return new_notebook(
+        cells=[
+            new_markdown_cell(
+                "# 00 · Setup del entorno\n\n"
+                "Verifico el entorno, abro la sesión de Kedro y confirmo que el catálogo "
+                "expone las 12 fuentes crudas. Todos los notebooks parten de aquí."
+            ),
+            new_code_cell(
+                "from pathlib import Path\n"
+                "from kedro.framework.session import KedroSession\n"
+                "from kedro.framework.startup import bootstrap_project\n"
+                "import tostao_ml\n\n"
+                "PROJECT = Path.cwd().parent if Path.cwd().name == 'notebooks' else Path.cwd()\n"
+                "bootstrap_project(PROJECT)\n"
+                "print('tostao_ml', tostao_ml.__version__)"
+            ),
+            new_code_cell(
+                "with KedroSession.create(project_path=PROJECT) as session:\n"
+                "    catalog = session.load_context().catalog\n"
+                "    datasets = [d for d in catalog.list() if d.startswith(('a_', 'b_', 'c_'))]\n"
+                "datasets"
+            ),
+            new_markdown_cell(
+                "**Conclusión.** El entorno reproducible (Python 3.13 + uv) está listo y el "
+                "catálogo tipa las 12 fuentes crudas por caso. A partir de aquí, cada caso "
+                "construye su **tabla maestra** cruzando sus fuentes y hace el EDA sobre ella."
+            ),
+        ]
+    )
 
 
-def eda_notebook(case: str, builder_call: str, target: str, intro: str, joins_md: str) -> nbf.NotebookNode:
+def eda_notebook(
+    case: str, builder_call: str, target: str, intro: str, joins_md: str
+) -> nbf.NotebookNode:
     load = (
         "from pathlib import Path\n"
         "from kedro.framework.session import KedroSession\n"
@@ -67,51 +75,56 @@ def eda_notebook(case: str, builder_call: str, target: str, intro: str, joins_md
         "    catalog = session.load_context().catalog\n"
         f"{builder_call}"
     )
-    return new_notebook(cells=[
-        new_markdown_cell(f"# {case} · EDA sobre la tabla maestra\n\n{intro}"),
-        new_markdown_cell(f"## 1. Construcción de la tabla maestra (cruce de fuentes)\n\n{joins_md}"),
-        new_code_cell(load),
-        new_code_cell("print('Master:', master.shape)\nprint('Cobertura de cruces:', join_report)\nmaster.head()"),
-        new_markdown_cell(
-            "La **cobertura de cruces** confirma la integridad referencial: la proporción "
-            "de filas del hecho que encontró match en cada fuente unida."
-        ),
-        new_markdown_cell("## 2. Perfilado estadístico (motor de EDA reutilizable)"),
-        new_code_cell(
-            f"profile = profile_dataset(master, name='{case}', target='{target}')\n"
-            "print('Tipos:')\n"
-            "for c, k in profile.types.items():\n    print(f'  {c:28s} {k.value}')\n"
-            "profile.univariate.round(3)"
-        ),
-        new_markdown_cell("### Mini-conclusiones autogeneradas (cifras reales del run)"),
-        new_code_cell(
-            "from IPython.display import Markdown\n"
-            "Markdown(profile.narrative.to_markdown())"
-        ),
-        new_markdown_cell("## 3. Multicolinealidad y correlaciones"),
-        new_code_cell(
-            "figs = build_eda_figures(master, profile)\n"
-            "display(profile.vif.round(3).to_frame('VIF'))\n"
-            "figs.get('correlation_heatmap')"
-        ),
-        new_markdown_cell("## 4. Relación con el target e información mutua"),
-        new_code_cell(
-            "display(profile.mutual_information.round(4).to_frame('MI'))\n"
-            "profile.bivariate.round(4)"
-        ),
-        new_code_cell(
-            "for name, fig in figs.items():\n"
-            "    if name.startswith(('dist__', 'target__')):\n"
-            "        fig.show()"
-        ),
-        new_markdown_cell(
-            "## 5. Conclusión\n\n"
-            "El EDA sobre la **tabla maestra cruzada** (no fuente por fuente) revela el tipado "
-            "de cada variable, la multicolinealidad (VIF), las correlaciones y qué features "
-            "discriminan el target (tests + información mutua). Estas conclusiones guían el "
-            "feature engineering y la elección de modelo del caso."
-        ),
-    ])
+    return new_notebook(
+        cells=[
+            new_markdown_cell(f"# {case} · EDA sobre la tabla maestra\n\n{intro}"),
+            new_markdown_cell(
+                f"## 1. Construcción de la tabla maestra (cruce de fuentes)\n\n{joins_md}"
+            ),
+            new_code_cell(load),
+            new_code_cell(
+                "print('Master:', master.shape)\nprint('Cobertura de cruces:', join_report)\nmaster.head()"
+            ),
+            new_markdown_cell(
+                "La **cobertura de cruces** confirma la integridad referencial: la proporción "
+                "de filas del hecho que encontró match en cada fuente unida."
+            ),
+            new_markdown_cell("## 2. Perfilado estadístico (motor de EDA reutilizable)"),
+            new_code_cell(
+                f"profile = profile_dataset(master, name='{case}', target='{target}')\n"
+                "print('Tipos:')\n"
+                "for c, k in profile.types.items():\n    print(f'  {c:28s} {k.value}')\n"
+                "profile.univariate.round(3)"
+            ),
+            new_markdown_cell("### Mini-conclusiones autogeneradas (cifras reales del run)"),
+            new_code_cell(
+                "from IPython.display import Markdown\nMarkdown(profile.narrative.to_markdown())"
+            ),
+            new_markdown_cell("## 3. Multicolinealidad y correlaciones"),
+            new_code_cell(
+                "figs = build_eda_figures(master, profile)\n"
+                "display(profile.vif.round(3).to_frame('VIF'))\n"
+                "figs.get('correlation_heatmap')"
+            ),
+            new_markdown_cell("## 4. Relación con el target e información mutua"),
+            new_code_cell(
+                "display(profile.mutual_information.round(4).to_frame('MI'))\n"
+                "profile.bivariate.round(4)"
+            ),
+            new_code_cell(
+                "for name, fig in figs.items():\n"
+                "    if name.startswith(('dist__', 'target__')):\n"
+                "        fig.show()"
+            ),
+            new_markdown_cell(
+                "## 5. Conclusión\n\n"
+                "El EDA sobre la **tabla maestra cruzada** (no fuente por fuente) revela el tipado "
+                "de cada variable, la multicolinealidad (VIF), las correlaciones y qué features "
+                "discriminan el target (tests + información mutua). Estas conclusiones guían el "
+                "feature engineering y la elección de modelo del caso."
+            ),
+        ]
+    )
 
 
 A_BUILDER = (
@@ -137,7 +150,9 @@ def main() -> None:
     _save(setup_notebook(), NB_DIR / "00_setup.ipynb")
     _save(
         eda_notebook(
-            "Caso A — Abastecimiento", A_BUILDER, "unidades_vendidas",
+            "Caso A — Abastecimiento",
+            A_BUILDER,
+            "unidades_vendidas",
             "Forecast de demanda semanal por SKU-tienda. Cruzo ventas con catálogo, "
             "maestro de tiendas, inventario y tendencia de referencia.",
             "`ventas ⨝ catálogo(producto) ⨝ maestro_tiendas(tienda) ⨝ inventario(tienda+producto) "
@@ -147,7 +162,9 @@ def main() -> None:
     )
     _save(
         eda_notebook(
-            "Caso B — Combos", B_BUILDER, "importe_linea",
+            "Caso B — Combos",
+            B_BUILDER,
+            "importe_linea",
             "Creación de combos por afinidad de co-compra. Cruzo el detalle de tickets con "
             "la cabecera y el catálogo de productos.",
             "`detalle_tickets ⨝ tickets(id_ticket) ⨝ catálogo(id_producto)` — una fila por "
@@ -157,7 +174,9 @@ def main() -> None:
     )
     _save(
         eda_notebook(
-            "Caso C — AOV", C_BUILDER, "total_venta",
+            "Caso C — AOV",
+            C_BUILDER,
+            "total_venta",
             "Drivers y predicción del ticket promedio. Cruzo transacciones con loyalty, "
             "variables exógenas e intensidad de promociones.",
             "`transacciones ⨝ loyalty(cliente) ⨝ exógenas(fecha+tienda) ⨝ intensidad_promos"
