@@ -35,7 +35,9 @@ def figure_to_div(fig: go.Figure, div_id: str | None = None) -> str:
 
 def plotly_js_bundle() -> str:
     """Devuelve el bundle de ``plotly.js`` embebible una sola vez en el reporte."""
-    return f'<script type="text/javascript">{pio.get_plotlyjs()}</script>'
+    from plotly.offline import get_plotlyjs
+
+    return f'<script type="text/javascript">{get_plotlyjs()}</script>'
 
 
 def save_figure(fig: go.Figure, path: str | Path, *, self_contained: bool = True) -> Path:
