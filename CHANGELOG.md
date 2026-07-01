@@ -80,3 +80,10 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 - **DevOps/AIOps**: `Dockerfile` (pipelines) y `serving/Dockerfile` (API)
   multi-stage con `uv` y usuario no root; `deployment/docker-compose.yml` (API +
   MLflow + Prometheus + Grafana) y provisión de monitoreo.
+- **AIOps — drift** (`framework/monitoring/drift.py`): detección de drift por
+  feature (PSI + KS para numéricas, chi² para categóricas) con narrativa y
+  umbrales, para cerrar el ciclo monitoreo→detección→reentrenamiento.
+- **MLOps / Docs**: model card y data card (`reports/`), scaffolding DVC
+  (`dvc.yaml`, `.dvc/`), documentación MkDocs (`mkdocs.yml`, `docs/`) con
+  `mkdocstrings`, y **README** en primera persona con puesta en marcha
+  reproducible, decisiones de diseño, resultados y limitaciones.
