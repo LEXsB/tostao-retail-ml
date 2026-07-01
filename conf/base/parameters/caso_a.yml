@@ -1,9 +1,15 @@
 # =========================================================================== #
 # Parámetros — Caso A: Optimización de Abastecimiento
 # =========================================================================== #
-# (Se completan al implementar el caso: features, espacios de HPO, supuestos de
-#  negocio del optimizador de pedido. Placeholder del scaffolding.)
 caso_a:
   target: unidades_vendidas
   grain: [id_tienda, id_producto]
   time_col: fecha
+  random_seed: 42
+  # Forecast probabilístico (modelo cuantílico).
+  quantiles: [0.1, 0.5, 0.9]
+  max_iter: 200
+  test_weeks: 3
+  # Optimización newsvendor: costos derivados del catálogo (precio, costo,
+  # almacenamiento). safety_factor > 1 → política agresiva.
+  safety_factor: 1.0

@@ -15,9 +15,12 @@ def test_package_import_and_version() -> None:
 
 
 @pytest.mark.unit
-def test_pipeline_registry_has_default() -> None:
-    """El registro de pipelines siempre expone un ``__default__``."""
+def test_pipeline_registry_has_all_cases() -> None:
+    """El registro expone los tres casos y un ``__default__`` que los une."""
     from tostao_ml.pipeline_registry import register_pipelines
 
     pipelines = register_pipelines()
-    assert "__default__" in pipelines
+    assert {"caso_a", "caso_b", "caso_c", "__default__"}.issubset(pipelines)
+    # El default debe orquestar los nodos de los tres casos.
+    default_nodes = {n.name for n in pipelines["__default__"].nodes}
+    assert {"build_master_a", "build_master_b", "build_master_c"}.issubset(default_nodes)

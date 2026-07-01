@@ -1,8 +1,14 @@
 # =========================================================================== #
 # Parámetros — Caso B: Creación de Combos
 # =========================================================================== #
-# (Se completan al implementar el caso: clustering, reglas de asociación,
-#  umbrales de support/confidence/lift. Placeholder del scaffolding.)
 caso_b:
   basket_key: id_ticket
   item_key: id_producto
+  random_seed: 42
+  # Segmentación de tiendas.
+  n_clusters: 3
+  # Reglas de asociación (FP-Growth) y propuesta de combos.
+  min_support: 0.02
+  min_lift: 1.0
+  top_n_combos: 5
+  combo_discount: 0.1
