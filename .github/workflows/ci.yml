@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KEDRO_DISABLE_TELEMETRY: "true"
+  UV_LINK_MODE: copy
+
+jobs:
+  quality:
+    name: Lint · Types · Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv (con Python 3.13)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Sincronizar entorno
+        run: uv sync --group dev
+
+      - name: Lint (ruff)
+        run: uv run ruff check src tests
+
+      - name: Formato (ruff format --check)
+        run: uv run ruff format --check src tests
+
+      - name: Tipos (mypy)
+        run: uv run mypy src
+
+      - name: Tests (pytest + cobertura)
+        run: uv run pytest
+
+      - name: Humo Kedro (registro de pipelines)
+        run: uv run kedro registry list
+
+      - name: Publicar cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
