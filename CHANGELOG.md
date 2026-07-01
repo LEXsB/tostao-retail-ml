@@ -73,3 +73,10 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   entregable ejecutivo autocontenido con 7 secciones (resumen + EDA y modelo de
   cada caso), integrando desempeño, interpretabilidad e impacto de negocio con la
   narrativa autogenerada.
+- **API de inferencia** (`serving/api/`, §11): FastAPI con endpoints versionados
+  por caso (recomendación de pedido newsvendor, combos, gasto esperado), esquemas
+  Pydantic, health/readiness y `/metrics` Prometheus opcional. Warmup en el
+  arranque (masters + modelos en memoria). Con pruebas de integración (TestClient).
+- **DevOps/AIOps**: `Dockerfile` (pipelines) y `serving/Dockerfile` (API)
+  multi-stage con `uv` y usuario no root; `deployment/docker-compose.yml` (API +
+  MLflow + Prometheus + Grafana) y provisión de monitoreo.
