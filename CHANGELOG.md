@@ -59,3 +59,8 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   (K-Means) + reglas de asociación FP-Growth (support/confidence/lift/conviction)
   → Top-N combos por cluster con precio propuesto y lift esperado. Sobre datos
   reales: 3 clusters (silhouette 0.32) y combos con lift 5–9 (p. ej. Buñuelo+Avena).
+- **Caso C** (`cases/caso_c.py`): modelo inferencial GLM de los drivers del ticket
+  (coeficientes + IC, outliers winsorizados) y modelo predictivo del gasto esperado
+  del cliente recurrente (features RFM + loyalty). Sobre datos reales: driver
+  dominante `total_articulos` (β≈8, p≈0) y `clima_Rainy` significativo (−0.39);
+  el modelo de gasto logra R² 0.77 y mejora ~54% el WAPE sobre el baseline.
