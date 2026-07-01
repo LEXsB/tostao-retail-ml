@@ -1,9 +1,15 @@
 # =========================================================================== #
 # Parámetros — Caso C: Modelado de AOV (drivers + predicción)
 # =========================================================================== #
-# (Se completan al implementar el caso: features RFM/loyalty/exógenas, modelo
-#  inferencial y predictivo, espacios de HPO. Placeholder del scaffolding.)
 caso_c:
   target: total_venta
   customer_key: id_cliente
   time_col: timestamp
+  random_seed: 42
+  # Modelo inferencial (GLM) + manejo de outliers.
+  glm_family: gaussian
+  winsor_lower: 0.01
+  winsor_upper: 0.99
+  # Modelo predictivo de gasto del cliente recurrente.
+  min_visits: 2
+  test_fraction: 0.2

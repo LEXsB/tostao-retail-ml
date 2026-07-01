@@ -64,3 +64,8 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   del cliente recurrente (features RFM + loyalty). Sobre datos reales: driver
   dominante `total_articulos` (β≈8, p≈0) y `clima_Rainy` significativo (−0.39);
   el modelo de gasto logra R² 0.77 y mejora ~54% el WAPE sobre el baseline.
+- **Pipelines Kedro** (`pipelines/caso_{a,b,c}/`): orquestan ingesta cruzada →
+  modelado → salidas para cada caso; `pipeline_registry` los registra y compone
+  el `__default__`. Catálogo tipado de salidas (masters, métricas, órdenes,
+  combos, coeficientes) y parámetros de modelo por caso. `kedro run --pipeline
+  caso_a|caso_b|caso_c` (o `kedro run` para los tres) ejecuta end-to-end.

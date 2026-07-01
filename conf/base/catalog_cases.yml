@@ -1,0 +1,97 @@
+# =========================================================================== #
+# DataCatalog — salidas de los pipelines por caso (capas >= 03)
+# =========================================================================== #
+# Las tablas maestras (primary), salidas de modelo (model_output) y artefactos
+# de reporte (reporting) se persisten tipados. Los datasets intermedios no
+# declarados (p. ej. b_baskets) usan MemoryDataset dentro del run.
+# --------------------------------------------------------------------------- #
+
+# --- Caso A ---------------------------------------------------------------- #
+master_caso_a_diario:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/master_caso_a_diario.parquet
+  metadata: {kedro-viz: {layer: primary}}
+
+master_caso_a_semanal:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/master_caso_a_semanal.parquet
+  metadata: {kedro-viz: {layer: primary}}
+
+a_join_report:
+  type: json.JSONDataset
+  filepath: data/08_reporting/a_join_report.json
+
+a_forecast_metrics:
+  type: json.JSONDataset
+  filepath: data/07_model_output/a_forecast_metrics.json
+
+a_orders:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/a_orders.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+a_forecast_test:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/a_forecast_test.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+a_narrative:
+  type: json.JSONDataset
+  filepath: data/08_reporting/a_narrative.json
+
+# --- Caso B ---------------------------------------------------------------- #
+master_caso_b:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/master_caso_b.parquet
+  metadata: {kedro-viz: {layer: primary}}
+
+b_join_report:
+  type: json.JSONDataset
+  filepath: data/08_reporting/b_join_report.json
+
+b_store_clusters:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/b_store_clusters.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+b_rules:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/b_rules.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+b_combos:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/b_combos.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+b_narrative:
+  type: json.JSONDataset
+  filepath: data/08_reporting/b_narrative.json
+
+# --- Caso C ---------------------------------------------------------------- #
+master_caso_c:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/master_caso_c.parquet
+  metadata: {kedro-viz: {layer: primary}}
+
+c_join_report:
+  type: json.JSONDataset
+  filepath: data/08_reporting/c_join_report.json
+
+c_coefficients:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/c_coefficients.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+c_metrics:
+  type: json.JSONDataset
+  filepath: data/07_model_output/c_metrics.json
+
+c_predictive_test:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/c_predictive_test.parquet
+  metadata: {kedro-viz: {layer: model_output}}
+
+c_narrative:
+  type: json.JSONDataset
+  filepath: data/08_reporting/c_narrative.json
