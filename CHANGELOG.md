@@ -43,3 +43,11 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   permutación y dependencia parcial, con figuras Plotly (summary, beeswarm, PDP).
 - **Optimización** (`optimization/`): solver newsvendor / critical fractile para
   la decisión de pedido del Caso A (política agresiva/conservadora, costo esperado).
+- **Reporte HTML** (`reporting/`): ensamblador Jinja2 autocontenido (plotly.js
+  embebido una sola vez), secciones con narrativa + figuras + tablas.
+- **Tablas maestras por caso** (`cases/masters.py`): cada caso cruza TODAS sus
+  fuentes en una master table única (A: ventas ⨝ catálogo ⨝ tiendas ⨝ inventario
+  ⨝ tendencias; B: detalle ⨝ tickets ⨝ catálogo; C: transacciones ⨝ loyalty ⨝
+  exógenas ⨝ intensidad de promociones), con diagnóstico de cobertura de cada
+  cruce. Script `scripts/build_masters_eda.py` genera las masters (Parquet) y un
+  reporte HTML de EDA por caso sobre la tabla cruzada.
