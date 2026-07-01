@@ -64,3 +64,26 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   del cliente recurrente (features RFM + loyalty). Sobre datos reales: driver
   dominante `total_articulos` (β≈8, p≈0) y `clima_Rainy` significativo (−0.39);
   el modelo de gasto logra R² 0.77 y mejora ~54% el WAPE sobre el baseline.
+- **Pipelines Kedro** (`pipelines/caso_{a,b,c}/`): orquestan ingesta cruzada →
+  modelado → salidas para cada caso; `pipeline_registry` los registra y compone
+  el `__default__`. Catálogo tipado de salidas (masters, métricas, órdenes,
+  combos, coeficientes) y parámetros de modelo por caso. `kedro run --pipeline
+  caso_a|caso_b|caso_c` (o `kedro run` para los tres) ejecuta end-to-end.
+- **Reporte HTML unificado** (`cases/reporting.py` + `scripts/build_unified_report.py`):
+  entregable ejecutivo autocontenido con 7 secciones (resumen + EDA y modelo de
+  cada caso), integrando desempeño, interpretabilidad e impacto de negocio con la
+  narrativa autogenerada.
+- **API de inferencia** (`serving/api/`, §11): FastAPI con endpoints versionados
+  por caso (recomendación de pedido newsvendor, combos, gasto esperado), esquemas
+  Pydantic, health/readiness y `/metrics` Prometheus opcional. Warmup en el
+  arranque (masters + modelos en memoria). Con pruebas de integración (TestClient).
+- **DevOps/AIOps**: `Dockerfile` (pipelines) y `serving/Dockerfile` (API)
+  multi-stage con `uv` y usuario no root; `deployment/docker-compose.yml` (API +
+  MLflow + Prometheus + Grafana) y provisión de monitoreo.
+- **AIOps — drift** (`framework/monitoring/drift.py`): detección de drift por
+  feature (PSI + KS para numéricas, chi² para categóricas) con narrativa y
+  umbrales, para cerrar el ciclo monitoreo→detección→reentrenamiento.
+- **MLOps / Docs**: model card y data card (`reports/`), scaffolding DVC
+  (`dvc.yaml`, `.dvc/`), documentación MkDocs (`mkdocs.yml`, `docs/`) con
+  `mkdocstrings`, y **README** en primera persona con puesta en marcha
+  reproducible, decisiones de diseño, resultados y limitaciones.

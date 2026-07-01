@@ -1,27 +1,27 @@
 """Registro de pipelines de ``tostao_ml``.
 
-Kedro descubre aquí los pipelines disponibles. A medida que se construyen el
-framework y los tres casos, cada uno registra su pipeline y el ``__default__``
-compone el flujo unificado (ingesta → validación → EDA → features → HPO →
-entrenamiento → evaluación → reporte).
+Kedro descubre aquí los pipelines disponibles. Cada caso registra su pipeline
+(ingesta cruzada → modelado → salidas) y el ``__default__`` compone el flujo
+unificado de los tres casos.
 """
 
 from __future__ import annotations
 
 from kedro.pipeline import Pipeline
 
+from tostao_ml.pipelines import caso_a, caso_b, caso_c
+
 
 def register_pipelines() -> dict[str, Pipeline]:
     """Registra los pipelines del proyecto.
 
     Returns:
-        Mapa ``nombre -> Pipeline``. La clave ``__default__`` define el pipeline
-        que ejecuta ``kedro run`` sin argumentos.
+        Mapa ``nombre -> Pipeline``. ``__default__`` ejecuta los tres casos.
     """
-    pipelines: dict[str, Pipeline] = {}
-    # Los pipelines se registran incrementalmente a medida que se construyen:
-    #   from tostao_ml.pipelines import data_ingestion, data_validation, eda, ...
-    #   pipelines["data_ingestion"] = data_ingestion.create_pipeline()
-    #   ...
-    pipelines["__default__"] = sum(pipelines.values(), start=Pipeline([]))
+    pipelines: dict[str, Pipeline] = {
+        "caso_a": caso_a.create_pipeline(),
+        "caso_b": caso_b.create_pipeline(),
+        "caso_c": caso_c.create_pipeline(),
+    }
+    pipelines["__default__"] = pipelines["caso_a"] + pipelines["caso_b"] + pipelines["caso_c"]
     return pipelines

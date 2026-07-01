@@ -1,0 +1,35 @@
+site_name: tostao-retail-ml
+site_description: Plataforma DS/ML retail — abastecimiento, combos y AOV
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: brown
+      accent: deep orange
+  features:
+    - navigation.sections
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+
+nav:
+  - Inicio: index.md
+  - Arquitectura: arquitectura.md
+  - Casos de uso: casos.md
+  - Referencia del framework: referencia.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables

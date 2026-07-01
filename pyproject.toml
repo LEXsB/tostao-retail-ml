@@ -128,6 +128,8 @@ exclude = ["notebooks/", "data/", "build/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Raíz al path para importar el paquete top-level `serving` (fuera de src/).
+pythonpath = ["."]
 addopts = "-ra --strict-markers --cov=tostao_ml --cov-report=term-missing --cov-report=xml"
 markers = [
     "unit: pruebas unitarias rápidas y aisladas",

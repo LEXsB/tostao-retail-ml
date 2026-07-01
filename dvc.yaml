@@ -1,0 +1,53 @@
+# =========================================================================== #
+# Pipeline DVC (reproducibilidad de datos/artefactos)
+# =========================================================================== #
+# Cada etapa envuelve un pipeline de Kedro; DVC versiona sus entradas y salidas.
+# Ejecutar:  dvc repro   (o por etapa:  dvc repro caso_a)
+# --------------------------------------------------------------------------- #
+stages:
+  caso_a:
+    cmd: kedro run --pipeline caso_a
+    deps:
+      - data/01_raw/01_supply_optimization
+      - src/tostao_ml/cases/caso_a.py
+      - src/tostao_ml/cases/masters.py
+    outs:
+      - data/03_primary/master_caso_a_semanal.parquet
+      - data/07_model_output/a_orders.parquet
+    metrics:
+      - data/07_model_output/a_forecast_metrics.json:
+          cache: false
+
+  caso_b:
+    cmd: kedro run --pipeline caso_b
+    deps:
+      - data/01_raw/02_product_bundles
+      - src/tostao_ml/cases/caso_b.py
+      - src/tostao_ml/cases/masters.py
+    outs:
+      - data/03_primary/master_caso_b.parquet
+      - data/07_model_output/b_combos.parquet
+
+  caso_c:
+    cmd: kedro run --pipeline caso_c
+    deps:
+      - data/01_raw/03_aov_drivers
+      - src/tostao_ml/cases/caso_c.py
+      - src/tostao_ml/cases/masters.py
+    outs:
+      - data/03_primary/master_caso_c.parquet
+      - data/07_model_output/c_coefficients.parquet
+    metrics:
+      - data/07_model_output/c_metrics.json:
+          cache: false
+
+  reporte_unificado:
+    cmd: python scripts/build_unified_report.py
+    deps:
+      - src/tostao_ml/cases/reporting.py
+      - data/03_primary/master_caso_a_semanal.parquet
+      - data/03_primary/master_caso_b.parquet
+      - data/03_primary/master_caso_c.parquet
+    outs:
+      - data/08_reporting/reporte_unificado.html:
+          cache: false
