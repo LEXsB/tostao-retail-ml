@@ -17,3 +17,10 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   tema de marca (`viz/`: figuras EDA + serialización HTML autocontenida),
   utilidades de reproducibilidad/hashing (`io/`) y validación de contratos con
   Pandera + integridad referencial (`validation/`). Con pruebas unitarias.
+- **Motor de EDA** (`profiling/`, §4): tipado automático de variables, estadística
+  univariada (outliers IQR/MAD, normalidad), multivariado (correlaciones
+  Pearson/Spearman/Kendall, VIF, número de condición, información mutua, Cramér's
+  V, Theil's U, razón de correlación η, correlaciones canónicas) y bivariado con
+  el target (t/ANOVA, Mann-Whitney/Kruskal, chi², KS, tamaños de efecto). El
+  orquestador `profile_dataset` emite un `DatasetProfile` con narrativa
+  autogenerada; validado sobre datos reales de ventas.
