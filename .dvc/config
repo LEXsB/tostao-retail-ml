@@ -1,0 +1,7 @@
+[core]
+    analytics = false
+# Remoto de almacenamiento (configurar en despliegue):
+# ['remote "storage"']
+#     url = s3://tostao-retail-ml/dvcstore
+# [core]
+#     remote = storage
