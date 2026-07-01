@@ -24,3 +24,7 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   el target (t/ANOVA, Mann-Whitney/Kruskal, chi², KS, tamaños de efecto). El
   orquestador `profile_dataset` emite un `DatasetProfile` con narrativa
   autogenerada; validado sobre datos reales de ventas.
+- **Transformadores de features** (`features/`): base `DataFrame`-first estilo
+  scikit-learn, calendario/cíclicos/rezagos temporales *group-aware* sin leakage,
+  RFM por cliente, `FrequencyEncoder`, `Winsorizer`, selección por VIF/correlación
+  y ensamblado automático de `ColumnTransformer` desde el tipado del EDA.
