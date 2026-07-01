@@ -7,45 +7,53 @@
   {{ plotly_js | safe }}
   <style>
     :root {
-      --coffee: #6F4E37; --coffee-2: #C68B59; --accent: #E4572E;
-      --ink: #2B2118; --paper: #FFFFFF; --grid: #ECE5DE; --muted: #7F8C8D;
-      --good: #2E9E5B; --warn: #E5A50A; --crit: #C0392B;
+      --coffee:#5B3A29; --coffee-2:#8C6A4A; --cream:#F7F2EC; --accent:#E4572E;
+      --ink:#241C16; --muted:#6B7280; --line:#E7DED4; --paper:#FFFFFF;
+      --good:#1E8E5A; --info:#2F6FB0; --warn:#C98A00; --crit:#C0392B;
+      --shadow:0 1px 3px rgba(40,25,15,.08),0 8px 24px rgba(40,25,15,.05);
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
-           color: var(--ink); background: #FAF7F3; line-height: 1.55; }
-    header.hero { background: linear-gradient(135deg, var(--coffee), var(--coffee-2));
-                  color: #fff; padding: 2.4rem 2rem; }
-    header.hero h1 { margin: 0 0 .3rem; font-size: 1.9rem; }
-    header.hero p { margin: 0; opacity: .92; }
-    .layout { display: grid; grid-template-columns: 250px 1fr; gap: 0; }
-    nav.toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow:auto;
-              background: #fff; border-right: 1px solid var(--grid); padding: 1.2rem 1rem; }
-    nav.toc h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em;
-                 color: var(--muted); margin: .4rem 0; }
-    nav.toc a { display: block; padding: .35rem .5rem; color: var(--ink); text-decoration: none;
-                border-radius: 6px; font-size: .92rem; }
-    nav.toc a:hover { background: var(--grid); }
-    main { padding: 1.6rem 2.2rem; max-width: 1100px; }
-    section.report-section { background: #fff; border: 1px solid var(--grid); border-radius: 12px;
-              padding: 1.4rem 1.6rem; margin-bottom: 1.6rem; scroll-margin-top: 1rem; }
-    section.report-section > h2 { margin-top: 0; color: var(--coffee); border-bottom: 2px solid var(--grid);
-                    padding-bottom: .5rem; }
-    .desc { color: #4a3f36; }
-    .insights { list-style: none; padding: 0; margin: 1rem 0; }
-    .insights li { padding: .55rem .8rem; border-radius: 8px; margin-bottom: .4rem;
-                   border-left: 4px solid var(--muted); background: #FBF9F6; }
-    .insights li.good { border-color: var(--good); }
-    .insights li.info { border-color: var(--coffee-2); }
-    .insights li.warning { border-color: var(--warn); }
-    .insights li.critical { border-color: var(--crit); }
-    .figure { margin: 1rem 0; }
-    table.table { border-collapse: collapse; width: 100%; font-size: .88rem; margin: .8rem 0; }
-    table.table th, table.table td { border: 1px solid var(--grid); padding: .4rem .6rem; text-align: right; }
-    table.table th { background: #F3ECE4; color: var(--coffee); }
-    footer { color: var(--muted); font-size: .82rem; padding: 1.5rem 2.2rem; }
-    .badge { display:inline-block; padding:.1rem .5rem; border-radius:999px; font-size:.72rem;
-             background: var(--grid); color: var(--coffee); margin-left:.4rem; }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);
+         background:var(--cream);line-height:1.6;font-size:15px}
+    header.hero{background:linear-gradient(135deg,var(--coffee),var(--coffee-2));color:#fff;
+                padding:2.6rem 2rem 2.2rem}
+    header.hero h1{margin:0 0 .4rem;font-size:2rem;font-weight:700;letter-spacing:-.01em}
+    header.hero p{margin:0;opacity:.94;font-size:1.02rem}
+    .layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:0;align-items:start}
+    nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;background:var(--paper);
+            border-right:1px solid var(--line);padding:1.3rem 1rem}
+    nav.toc h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:.6rem .4rem}
+    nav.toc a{display:block;padding:.4rem .6rem;color:var(--ink);text-decoration:none;border-radius:8px;
+              font-size:.9rem;border-left:3px solid transparent}
+    nav.toc a:hover{background:var(--cream);border-left-color:var(--accent)}
+    main{padding:1.8rem 2.4rem 3rem;min-width:0}
+    section.report-section{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+              padding:1.5rem 1.7rem;margin-bottom:1.6rem;scroll-margin-top:1rem;box-shadow:var(--shadow)}
+    section.report-section>h2{margin:.1rem 0 .8rem;color:var(--coffee);font-size:1.35rem;
+              border-bottom:2px solid var(--line);padding-bottom:.55rem}
+    section.report-section h3{color:var(--coffee-2);font-size:1.02rem;margin:1.2rem 0 .5rem}
+    .desc{color:#4a3f36;margin:.2rem 0 1rem}
+    .insights{list-style:none;padding:0;margin:1rem 0}
+    .insights li{padding:.6rem .85rem;border-radius:9px;margin-bottom:.45rem;background:var(--cream);
+                 border-left:4px solid var(--muted)}
+    .insights li.good{border-color:var(--good)} .insights li.info{border-color:var(--info)}
+    .insights li.warning{border-color:var(--warn)} .insights li.critical{border-color:var(--crit)}
+    .figure{margin:1rem 0;border:1px solid var(--line);border-radius:10px;padding:.4rem;overflow:hidden}
+    /* Tablas: contenedor con scroll para que NUNCA se salgan del formato. */
+    .table-wrap{overflow-x:auto;max-width:100%;max-height:460px;overflow-y:auto;border:1px solid var(--line);
+                border-radius:10px;margin:.7rem 0}
+    table.table{border-collapse:collapse;width:max-content;min-width:100%;font-size:.82rem;font-variant-numeric:tabular-nums}
+    table.table th,table.table td{border-bottom:1px solid var(--line);padding:.38rem .7rem;text-align:right;white-space:nowrap}
+    table.table th{position:sticky;top:0;background:#F3ECE4;color:var(--coffee);z-index:1;text-align:right;font-weight:600}
+    table.table td:first-child,table.table th:first-child{text-align:left;position:sticky;left:0;background:var(--paper)}
+    table.table th:first-child{background:#F3ECE4}
+    table.table tr:nth-child(even) td{background:#FBF8F4}
+    .badge{display:inline-block;padding:.12rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;
+           background:var(--cream);color:var(--coffee);margin-left:.5rem;border:1px solid var(--line)}
+    .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+    footer{color:var(--muted);font-size:.82rem;padding:1.5rem 2.4rem;border-top:1px solid var(--line)}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
   </style>
 </head>
 <body>
@@ -55,7 +63,7 @@
   </header>
   <div class="layout">
     <nav class="toc">
-      <h2>Índice</h2>
+      <h2>Contenido</h2>
       {% for s in sections %}
       <a href="#{{ s.id }}">{{ loop.index }}. {{ s.title }}</a>
       {% endfor %}
@@ -63,24 +71,26 @@
     <main>
       {% for s in sections %}
       <section class="report-section" id="{{ s.id }}">
-        <h2>{{ s.title }}
-          {% if s.worst_severity %}<span class="badge">{{ s.worst_severity }}</span>{% endif %}
-        </h2>
+        <h2>{{ s.title }}{% if s.worst_severity %}<span class="badge">{{ s.worst_severity }}</span>{% endif %}</h2>
         {% if s.description %}<p class="desc">{{ s.description }}</p>{% endif %}
         {% if s.insights %}
         <ul class="insights">
           {% for ins in s.insights %}
-          <li class="{{ ins.severity }}">{{ ins.emoji }}
-            {% if ins.title %}<strong>{{ ins.title }}</strong> — {% endif %}{{ ins.text }}</li>
+          <li class="{{ ins.severity }}">{{ ins.emoji }} {% if ins.title %}<strong>{{ ins.title }}</strong> — {% endif %}{{ ins.text }}</li>
           {% endfor %}
         </ul>
         {% endif %}
-        {% for name, div in s.figures.items() %}
-        <div class="figure">{{ div | safe }}</div>
-        {% endfor %}
         {% for name, html in s.tables.items() %}
-        <div class="table-wrap"><h3>{{ name }}</h3>{{ html | safe }}</div>
+        <h3>{{ name }}</h3>
+        <div class="table-wrap">{{ html | safe }}</div>
         {% endfor %}
+        {% if s.figures %}
+        <div class="grid2">
+          {% for name, div in s.figures.items() %}
+          <div class="figure">{{ div | safe }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
       </section>
       {% endfor %}
     </main>

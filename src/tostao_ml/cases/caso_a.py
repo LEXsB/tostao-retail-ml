@@ -44,6 +44,8 @@ class CaseAResult:
     cost_model: float
     cost_naive: float
     narrative: Narrative = field(default_factory=Narrative)
+    model: object = None
+    feature_names: list[str] = field(default_factory=list)
 
 
 def build_features_a(weekly: pd.DataFrame) -> pd.DataFrame:
@@ -99,7 +101,16 @@ def run_case_a(
 
     orders, cost_model, cost_naive = _optimize_orders(test, q_pred, quantiles)
     narrative = _narrate(result_metrics, cost_model, cost_naive, quantiles)
-    return CaseAResult(result_metrics, test, orders, cost_model, cost_naive, narrative)
+    return CaseAResult(
+        result_metrics,
+        test,
+        orders,
+        cost_model,
+        cost_naive,
+        narrative,
+        model=model,
+        feature_names=list(FEATURES),
+    )
 
 
 def _optimize_orders(
