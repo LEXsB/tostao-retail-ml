@@ -1,0 +1,30 @@
+# =========================================================================== #
+# Parámetros comunes a todos los casos (configuración sobre código)
+# =========================================================================== #
+# Nada de valores hardcodeados en el código: semillas, umbrales, rutas de
+# reporte y supuestos de negocio viven aquí y se sobreescriben por entorno.
+# --------------------------------------------------------------------------- #
+
+project:
+  name: tostao-retail-ml
+  random_seed: 42          # semilla global para reproducibilidad total
+  n_jobs: -1
+
+# Umbrales usados por el motor de narración (narrate/) para redactar
+# mini-conclusiones. Configurables — no viven en el código.
+narrate:
+  vif_moderate: 5.0
+  vif_severe: 10.0
+  corr_strong: 0.7
+  corr_moderate: 0.4
+  pvalue_alpha: 0.05
+  effect_small: 0.2
+  effect_medium: 0.5
+  effect_large: 0.8
+  mi_relevant: 0.05
+
+# Convenciones de validación cruzada temporal (evitar leakage en A y C).
+validation:
+  cv_folds: 5
+  ts_test_size: 0.2
+  gap: 0

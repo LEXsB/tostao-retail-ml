@@ -1,0 +1,118 @@
+# =========================================================================== #
+# DataCatalog — capa 01_raw (SOLO LECTURA, entrada del sistema)
+# =========================================================================== #
+# Los CSV crudos se declaran aquí como entrada tipada. Ninguna lógica hace
+# `pd.read_csv` suelto. La persistencia de resultados ocurre en capas >= 02
+# (intermediate → primary → feature → model_input → models → model_output →
+# reporting), definidas por cada pipeline de caso.
+# --------------------------------------------------------------------------- #
+
+_csv_raw: &csv_raw
+  type: pandas.CSVDataset
+  load_args:
+    encoding: utf-8
+
+# --- Caso A — Optimización de Abastecimiento (01_supply_optimization) ------- #
+a_ventas_historicas:
+  <<: *csv_raw
+  filepath: data/01_raw/01_supply_optimization/ventas_historicas.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [fecha]
+  metadata:
+    kedro-viz:
+      layer: raw
+
+a_inventario_actual:
+  <<: *csv_raw
+  filepath: data/01_raw/01_supply_optimization/inventario_actual.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+a_catalogo_productos:
+  <<: *csv_raw
+  filepath: data/01_raw/01_supply_optimization/catalogo_productos.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+a_maestro_tiendas:
+  <<: *csv_raw
+  filepath: data/01_raw/01_supply_optimization/maestro_tiendas.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+a_ground_truth_trends:
+  <<: *csv_raw
+  filepath: data/01_raw/01_supply_optimization/ground_truth_trends.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# --- Caso B — Creación de Combos (02_product_bundles) ---------------------- #
+b_tickets:
+  <<: *csv_raw
+  filepath: data/01_raw/02_product_bundles/tickets.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [fecha]
+  metadata:
+    kedro-viz:
+      layer: raw
+
+b_detalle_tickets:
+  <<: *csv_raw
+  filepath: data/01_raw/02_product_bundles/detalle_tickets.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+b_catalogo_productos:
+  <<: *csv_raw
+  filepath: data/01_raw/02_product_bundles/catalogo_productos.csv
+  metadata:
+    kedro-viz:
+      layer: raw
+
+# --- Caso C — Modelado de AOV (03_aov_drivers) ----------------------------- #
+c_transacciones_resumen:
+  <<: *csv_raw
+  filepath: data/01_raw/03_aov_drivers/transacciones_resumen.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [timestamp]
+  metadata:
+    kedro-viz:
+      layer: raw
+
+c_promociones_activas:
+  <<: *csv_raw
+  filepath: data/01_raw/03_aov_drivers/promociones_activas.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [fecha_inicio, fecha_fin]
+  metadata:
+    kedro-viz:
+      layer: raw
+
+c_variables_exogenas:
+  <<: *csv_raw
+  filepath: data/01_raw/03_aov_drivers/variables_exogenas.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [fecha]
+  metadata:
+    kedro-viz:
+      layer: raw
+
+c_clientes_loyalty:
+  <<: *csv_raw
+  filepath: data/01_raw/03_aov_drivers/clientes_loyalty.csv
+  load_args:
+    encoding: utf-8
+    parse_dates: [fecha_registro]
+  metadata:
+    kedro-viz:
+      layer: raw

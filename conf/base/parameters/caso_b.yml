@@ -1,0 +1,8 @@
+# =========================================================================== #
+# Parámetros — Caso B: Creación de Combos
+# =========================================================================== #
+# (Se completan al implementar el caso: clustering, reglas de asociación,
+#  umbrales de support/confidence/lift. Placeholder del scaffolding.)
+caso_b:
+  basket_key: id_ticket
+  item_key: id_producto

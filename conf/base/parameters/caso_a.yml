@@ -1,0 +1,9 @@
+# =========================================================================== #
+# Parámetros — Caso A: Optimización de Abastecimiento
+# =========================================================================== #
+# (Se completan al implementar el caso: features, espacios de HPO, supuestos de
+#  negocio del optimizador de pedido. Placeholder del scaffolding.)
+caso_a:
+  target: unidades_vendidas
+  grain: [id_tienda, id_producto]
+  time_col: fecha

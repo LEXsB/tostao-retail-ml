@@ -1,0 +1,9 @@
+# =========================================================================== #
+# Parámetros — Caso C: Modelado de AOV (drivers + predicción)
+# =========================================================================== #
+# (Se completan al implementar el caso: features RFM/loyalty/exógenas, modelo
+#  inferencial y predictivo, espacios de HPO. Placeholder del scaffolding.)
+caso_c:
+  target: total_venta
+  customer_key: id_cliente
+  time_col: timestamp

@@ -1,0 +1,55 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Entornos ---
+.venv/
+venv/
+env/
+.python-version
+
+# --- Kedro / MLOps ---
+conf/local/**
+!conf/local/.gitkeep
+logs/
+mlruns/
+mlartifacts/
+.telemetry
+kedro-viz-*/
+
+# --- Datos (convención Kedro): capas derivadas git-ignored; el crudo 01_raw sí se versiona ---
+# Se ignora el CONTENIDO generado de cada capa derivada pero se conserva la
+# carpeta (vía .gitkeep). La capa 01_raw se versiona completa (datos de entrada).
+data/02_intermediate/*
+data/03_primary/*
+data/04_feature/*
+data/05_model_input/*
+data/06_models/*
+data/07_model_output/*
+data/08_reporting/*
+!data/**/.gitkeep
+data/01_raw/**/*.parquet
+
+# --- Notebooks: outputs limpiados con nbstripout ---
+.ipynb_checkpoints/
+
+# --- IDE / SO ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Secrets ---
+*.env
+.env
+!*.env.example

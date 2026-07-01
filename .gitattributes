@@ -1,0 +1,16 @@
+# Normalización de finales de línea reproducible
+* text=auto eol=lf
+*.py    text diff=python
+*.md    text
+*.yml   text
+*.yaml  text
+*.toml  text
+*.csv   text
+*.ipynb text
+
+# Binarios
+*.parquet binary
+*.zip     binary
+*.png     binary
+*.pkl     binary
+*.joblib  binary

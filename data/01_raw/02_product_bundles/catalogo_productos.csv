@@ -1,0 +1,36 @@
+id_producto,nombre,categoria,subcategoria
+PROD_001,Tinto,Bebidas,Calientes
+PROD_002,Café con Leche,Bebidas,Calientes
+PROD_003,Cappuccino,Bebidas,Calientes
+PROD_004,Mocaccino,Bebidas,Calientes
+PROD_005,Chocolate,Bebidas,Calientes
+PROD_006,Aromática,Bebidas,Calientes
+PROD_007,Latte,Bebidas,Calientes
+PROD_008,Tinto Grande,Bebidas,Calientes
+PROD_009,Jugo de Naranja,Bebidas,Frías
+PROD_010,Avena,Bebidas,Frías
+PROD_011,Agua Manantial,Bebidas,Frías
+PROD_012,Gaseosa 400ml,Bebidas,Frías
+PROD_013,Té Helado,Bebidas,Frías
+PROD_014,Yogurt,Bebidas,Frías
+PROD_015,Pan de Bono,Alimentos,Panadería Sal
+PROD_016,Buñuelo,Alimentos,Panadería Sal
+PROD_017,Almojábana,Alimentos,Panadería Sal
+PROD_018,Pan de Yuca,Alimentos,Panadería Sal
+PROD_019,Empanada de Carne,Alimentos,Panadería Sal
+PROD_020,Empanada de Pollo,Alimentos,Panadería Sal
+PROD_021,Pastel de Pollo,Alimentos,Panadería Sal
+PROD_022,Pastel de Carne,Alimentos,Panadería Sal
+PROD_023,Croissant de Queso,Alimentos,Panadería Sal
+PROD_024,Palito de Queso,Alimentos,Panadería Sal
+PROD_025,Arepa de Choclo,Alimentos,Panadería Sal
+PROD_026,Rollo de Canela,Alimentos,Panadería Dulce
+PROD_027,Corazón de Hojaldre,Alimentos,Panadería Dulce
+PROD_028,Galleta de Chispas,Alimentos,Panadería Dulce
+PROD_029,Muffin de Chocolate,Alimentos,Panadería Dulce
+PROD_030,Torta de Zanahoria,Alimentos,Panadería Dulce
+PROD_031,Torta de Chocolate,Alimentos,Panadería Dulce
+PROD_032,Dona,Alimentos,Panadería Dulce
+PROD_033,Chocolatina,Alimentos,Panadería Dulce
+PROD_034,Sandwich de Jamón y Queso,Alimentos,Sandwiches
+PROD_035,Sandwich de Pollo,Alimentos,Sandwiches
