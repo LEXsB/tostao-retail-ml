@@ -34,3 +34,12 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 - **Motor de HPO** (`tuning/`, §6): Optuna con espacios de búsqueda declarativos,
   samplers (TPE/CMA-ES/NSGA-II), pruners, validación cruzada inyectable, estudios
   reproducibles, importancia de hiperparámetros y figuras de optimización.
+- **Evaluación** (`evaluation/`, §7): métricas de regresión/forecast (MAE, RMSE,
+  WAPE, sMAPE, pinball, PICP, MPIW, Theil's U) y clasificación (ROC-AUC, PR-AUC,
+  KS, Brier); validadores temporales (walk-forward) y estándar; fábrica de gráficos
+  de desempeño (predicho vs real, residuales, ROC/PR, calibración, matriz de
+  confusión, ganancia, bandas de intervalos) y contenedor de KPIs de negocio.
+- **Interpretabilidad** (`interpret/`): SHAP model-agnóstico, importancia por
+  permutación y dependencia parcial, con figuras Plotly (summary, beeswarm, PDP).
+- **Optimización** (`optimization/`): solver newsvendor / critical fractile para
+  la decisión de pedido del Caso A (política agresiva/conservadora, costo esperado).
