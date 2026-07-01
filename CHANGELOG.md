@@ -69,3 +69,7 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   el `__default__`. Catálogo tipado de salidas (masters, métricas, órdenes,
   combos, coeficientes) y parámetros de modelo por caso. `kedro run --pipeline
   caso_a|caso_b|caso_c` (o `kedro run` para los tres) ejecuta end-to-end.
+- **Reporte HTML unificado** (`cases/reporting.py` + `scripts/build_unified_report.py`):
+  entregable ejecutivo autocontenido con 7 secciones (resumen + EDA y modelo de
+  cada caso), integrando desempeño, interpretabilidad e impacto de negocio con la
+  narrativa autogenerada.

@@ -26,23 +26,45 @@ REPORTING = Path("data/08_reporting")
 
 def _join_report_table(report: dict[str, float]) -> pd.DataFrame:
     return pd.DataFrame(
-        {"fuente_cruzada": list(report), "cobertura_%": [round(v * 100, 2) for v in report.values()]}
+        {
+            "fuente_cruzada": list(report),
+            "cobertura_%": [round(v * 100, 2) for v in report.values()],
+        }
     )
 
 
-def build_eda_report(master: pd.DataFrame, *, name: str, title: str, target: str | None,
-                     join_report: dict[str, float], description: str) -> HTMLReport:
+def build_eda_report(
+    master: pd.DataFrame,
+    *,
+    name: str,
+    title: str,
+    target: str | None,
+    join_report: dict[str, float],
+    description: str,
+) -> HTMLReport:
     """Perfila la master table y arma su reporte HTML de EDA."""
     profile = profile_dataset(master, name=name, target=target)
     figures = build_eda_figures(master, profile)
 
-    report = HTMLReport(title=title, subtitle=f"EDA sobre la tabla maestra cruzada — {len(master):,} filas")
+    report = HTMLReport(
+        title=title, subtitle=f"EDA sobre la tabla maestra cruzada — {len(master):,} filas"
+    )
 
-    resumen = ReportSection(id="resumen", title="Resumen y cruce de fuentes", description=description,
-                            narrative=profile.narrative)
-    resumen.add_table("Cobertura de cada cruce (integridad referencial)", _join_report_table(join_report))
-    resumen.add_table("Tipos de variable inferidos",
-                      pd.DataFrame({"variable": list(profile.types), "tipo": [t.value for t in profile.types.values()]}))
+    resumen = ReportSection(
+        id="resumen",
+        title="Resumen y cruce de fuentes",
+        description=description,
+        narrative=profile.narrative,
+    )
+    resumen.add_table(
+        "Cobertura de cada cruce (integridad referencial)", _join_report_table(join_report)
+    )
+    resumen.add_table(
+        "Tipos de variable inferidos",
+        pd.DataFrame(
+            {"variable": list(profile.types), "tipo": [t.value for t in profile.types.values()]}
+        ),
+    )
     report.add_section(resumen)
 
     univ = ReportSection(id="univariado", title="Distribuciones univariadas")
@@ -66,7 +88,9 @@ def build_eda_report(master: pd.DataFrame, *, name: str, title: str, target: str
                 biv.add_figure(key, fig)
         biv.add_table("Tests bivariados feature–target", profile.bivariate.round(4))
         if not profile.mutual_information.empty:
-            biv.add_table("Información mutua feature→target", profile.mutual_information.round(4).to_frame())
+            biv.add_table(
+                "Información mutua feature→target", profile.mutual_information.round(4).to_frame()
+            )
         report.add_section(biv)
 
     return report
@@ -79,53 +103,91 @@ def main() -> None:
 
     with KedroSession.create(project_path=Path.cwd()) as session:
         catalog = session.load_context().catalog
-        raw = {name: catalog.load(name) for name in [
-            "a_ventas_historicas", "a_catalogo_productos", "a_maestro_tiendas",
-            "a_inventario_actual", "a_ground_truth_trends",
-            "b_tickets", "b_detalle_tickets", "b_catalogo_productos",
-            "c_transacciones_resumen", "c_clientes_loyalty", "c_variables_exogenas", "c_promociones_activas",
-        ]}
+        raw = {
+            name: catalog.load(name)
+            for name in [
+                "a_ventas_historicas",
+                "a_catalogo_productos",
+                "a_maestro_tiendas",
+                "a_inventario_actual",
+                "a_ground_truth_trends",
+                "b_tickets",
+                "b_detalle_tickets",
+                "b_catalogo_productos",
+                "c_transacciones_resumen",
+                "c_clientes_loyalty",
+                "c_variables_exogenas",
+                "c_promociones_activas",
+            ]
+        }
 
     # --- Caso A -------------------------------------------------------------
     master_a, rep_a = masters.build_master_a(
-        raw["a_ventas_historicas"], raw["a_catalogo_productos"], raw["a_maestro_tiendas"],
-        raw["a_inventario_actual"], raw["a_ground_truth_trends"])
+        raw["a_ventas_historicas"],
+        raw["a_catalogo_productos"],
+        raw["a_maestro_tiendas"],
+        raw["a_inventario_actual"],
+        raw["a_ground_truth_trends"],
+    )
     weekly_a = masters.aggregate_weekly_a(master_a)
     master_a.to_parquet(PRIMARY / "master_caso_a_diario.parquet")
     weekly_a.to_parquet(PRIMARY / "master_caso_a_semanal.parquet")
     build_eda_report(
-        weekly_a, name="caso_a_semanal", title="Caso A — Abastecimiento · Tabla maestra + EDA",
-        target="unidades_vendidas", join_report=rep_a,
-        description=("Demanda semanal por SKU-tienda enriquecida con catálogo (costos/precio), "
-                     "maestro de tiendas, inventario actual y tendencia de referencia."),
+        weekly_a,
+        name="caso_a_semanal",
+        title="Caso A — Abastecimiento · Tabla maestra + EDA",
+        target="unidades_vendidas",
+        join_report=rep_a,
+        description=(
+            "Demanda semanal por SKU-tienda enriquecida con catálogo (costos/precio), "
+            "maestro de tiendas, inventario actual y tendencia de referencia."
+        ),
     ).save(REPORTING / "eda_caso_a.html")
 
     # --- Caso B -------------------------------------------------------------
     master_b, rep_b = masters.build_master_b(
-        raw["b_tickets"], raw["b_detalle_tickets"], raw["b_catalogo_productos"])
+        raw["b_tickets"], raw["b_detalle_tickets"], raw["b_catalogo_productos"]
+    )
     master_b.to_parquet(PRIMARY / "master_caso_b.parquet")
     build_eda_report(
-        master_b, name="caso_b", title="Caso B — Combos · Tabla maestra + EDA",
-        target="importe_linea", join_report=rep_b,
-        description=("Líneas de ticket enriquecidas con cabecera (fecha/tienda/cliente) y catálogo "
-                     "(categoría/subcategoría). Base para clustering y reglas de asociación."),
+        master_b,
+        name="caso_b",
+        title="Caso B — Combos · Tabla maestra + EDA",
+        target="importe_linea",
+        join_report=rep_b,
+        description=(
+            "Líneas de ticket enriquecidas con cabecera (fecha/tienda/cliente) y catálogo "
+            "(categoría/subcategoría). Base para clustering y reglas de asociación."
+        ),
     ).save(REPORTING / "eda_caso_b.html")
 
     # --- Caso C -------------------------------------------------------------
     master_c, rep_c = masters.build_master_c(
-        raw["c_transacciones_resumen"], raw["c_clientes_loyalty"],
-        raw["c_variables_exogenas"], raw["c_promociones_activas"])
+        raw["c_transacciones_resumen"],
+        raw["c_clientes_loyalty"],
+        raw["c_variables_exogenas"],
+        raw["c_promociones_activas"],
+    )
     master_c.to_parquet(PRIMARY / "master_caso_c.parquet")
     build_eda_report(
-        master_c, name="caso_c", title="Caso C — AOV · Tabla maestra + EDA",
-        target="total_venta", join_report=rep_c,
-        description=("Tickets enriquecidos con loyalty (edad/segmento/antigüedad), exógenas "
-                     "(clima/tráfico/competencia) e intensidad de promociones activas."),
+        master_c,
+        name="caso_c",
+        title="Caso C — AOV · Tabla maestra + EDA",
+        target="total_venta",
+        join_report=rep_c,
+        description=(
+            "Tickets enriquecidos con loyalty (edad/segmento/antigüedad), exógenas "
+            "(clima/tráfico/competencia) e intensidad de promociones activas."
+        ),
     ).save(REPORTING / "eda_caso_c.html")
 
     # --- Resumen a consola --------------------------------------------------
     print("\n===================== MASTER TABLES =====================")
-    for name, df, rep in [("A (semanal)", weekly_a, rep_a), ("B", master_b, rep_b), ("C", master_c, rep_c)]:
+    for name, df, rep in [
+        ("A (semanal)", weekly_a, rep_a),
+        ("B", master_b, rep_b),
+        ("C", master_c, rep_c),
+    ]:
         print(f"\n### CASO {name}: {df.shape[0]:,} filas × {df.shape[1]} columnas")
         print("  columnas:", list(df.columns))
         print("  cobertura de cruces:")
