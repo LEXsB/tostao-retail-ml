@@ -51,3 +51,11 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   exógenas ⨝ intensidad de promociones), con diagnóstico de cobertura de cada
   cruce. Script `scripts/build_masters_eda.py` genera las masters (Parquet) y un
   reporte HTML de EDA por caso sobre la tabla cruzada.
+- **Caso A** (`cases/caso_a.py`): forecast probabilístico (modelo cuantílico) con
+  features de rezago/estacionalidad, evaluación (WAPE/pinball/PICP/MPIW) vs
+  baseline ingenuo y optimización de pedido newsvendor. Sobre datos reales: WAPE
+  13% (R² 0.88) y ~70% de reducción del costo esperado de faltante+sobrante.
+- **Caso B** (`cases/caso_b.py`): clustering de tiendas por perfil de compra
+  (K-Means) + reglas de asociación FP-Growth (support/confidence/lift/conviction)
+  → Top-N combos por cluster con precio propuesto y lift esperado. Sobre datos
+  reales: 3 clusters (silhouette 0.32) y combos con lift 5–9 (p. ej. Buñuelo+Avena).
