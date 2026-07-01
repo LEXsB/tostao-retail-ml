@@ -28,3 +28,9 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
   scikit-learn, calendario/cíclicos/rezagos temporales *group-aware* sin leakage,
   RFM por cliente, `FrequencyEncoder`, `Winsorizer`, selección por VIF/correlación
   y ensamblado automático de `ColumnTransformer` desde el tipado del EDA.
+- **Modelos** (`models/`): `BaseModel` (ABC) con fit/predict/predict_interval/
+  save/load, registry/factory por configuración e implementaciones (Ridge, GBR,
+  forecast probabilístico cuantílico, K-Means, GLM inferencial con IC).
+- **Motor de HPO** (`tuning/`, §6): Optuna con espacios de búsqueda declarativos,
+  samplers (TPE/CMA-ES/NSGA-II), pruners, validación cruzada inyectable, estudios
+  reproducibles, importancia de hiperparámetros y figuras de optimización.
