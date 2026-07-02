@@ -103,6 +103,15 @@ def test_unified_report_renders_all_cases() -> None:
     html = report.render()
     # Intro + EDA (resumen/target/multi por caso) + modelado por caso + glosario.
     assert len(report.sections) >= 10
-    for marker in ("Caso A", "Caso B", "Caso C", "Resumen ejecutivo", "Glosario", "Apertura por la variable objetivo"):
+    for marker in (
+        "Caso A",
+        "Caso B",
+        "Caso C",
+        "Resumen ejecutivo",
+        "Glosario",
+        "Apertura por la variable objetivo",
+        "Estrategia de modelamiento",
+        "Optuna",
+    ):
         assert marker in html
     assert "Plotly.newPlot" in html

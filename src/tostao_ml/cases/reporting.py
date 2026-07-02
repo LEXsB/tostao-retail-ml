@@ -36,6 +36,7 @@ from tostao_ml.framework.profiling import (
 )
 from tostao_ml.framework.profiling.engine import DatasetProfile
 from tostao_ml.framework.reporting import HTMLReport, ReportSection
+from tostao_ml.framework.tuning import TuningResult
 from tostao_ml.framework.viz import COLORS
 from tostao_ml.framework.viz import eda as eda_viz
 
@@ -160,7 +161,9 @@ def eda_sections(
     overview_narr = Narrative().add(_dims_insight(frame, profile))
     overview_narr.extend(list(profile.narrative)[-1:])  # insight de composición
     overview = ReportSection(
-        id=f"{prefix}_resumen", title="Resumen y variables", description=description,
+        id=f"{prefix}_resumen",
+        title="Resumen y variables",
+        description=description,
         narrative=overview_narr,
     )
     if join_report:
@@ -292,8 +295,202 @@ def _coef_figure(coefs: pd.DataFrame, top: int = 12) -> go.Figure:
     return eda_viz.apply_theme(fig, title="Drivers del ticket (GLM)")
 
 
+def _hpo_detail(tuning: TuningResult | None) -> str:
+    """Frase con la mejor configuración de HPO y el hiperparámetro más influyente."""
+    if tuning is None:
+        return "No se ejecutó HPO en este run; se usó una configuración por defecto razonable."
+    imp = tuning.param_importances or {}
+    n = len(tuning.study.trials)
+    top = max(imp.items(), key=lambda kv: kv[1])[0] if imp else "—"
+    cfg = ", ".join(
+        f"{k}={round(v, 4) if isinstance(v, float) else v}" for k, v in tuning.best_params.items()
+    )
+    return f"Optuna (TPE, {n} trials); mejor config: {cfg}; hiperparámetro más influyente: «{top}»."
+
+
+def _strategy_section(
+    case_id: str, title: str, rows: list[tuple[str, str]], insights: list[Insight]
+) -> ReportSection:
+    """Sección corta y estándar de estrategia de modelamiento y validación."""
+    narr = Narrative()
+    for ins in insights:
+        narr.add(ins)
+    return ReportSection(
+        id=case_id,
+        title=title,
+        description="Cómo se modela, cómo se valida, qué métricas se usan y qué decisión se toma (y por qué).",
+        narrative=narr,
+    ).add_table(
+        "Estrategia de modelamiento y validación",
+        pd.DataFrame(rows, columns=["aspecto", "detalle"]),
+    )
+
+
+def strategy_a(result: caso_a.CaseAResult) -> ReportSection:
+    m = result.metrics
+    rows = [
+        (
+            "Tipo de tarea",
+            "Regresión / forecasting probabilístico de demanda semanal por SKU-tienda.",
+        ),
+        (
+            "Modelo",
+            "Gradient boosting cuantílico (HistGradientBoosting, pérdida pinball): un estimador por cuantil (0.1/0.5/0.9).",
+        ),
+        (
+            "¿Por qué este modelo?",
+            "La decisión de pedido depende de la incertidumbre, no solo del valor esperado; los cuantiles dan intervalos y permiten el newsvendor.",
+        ),
+        (
+            "Partición train/test",
+            "Holdout temporal: las últimas 3 semanas son test y el resto es train (sin leakage de futuro).",
+        ),
+        (
+            "Validación",
+            "Walk-forward (TimeSeriesSplit, 3 folds) dentro de train — respeta el orden temporal.",
+        ),
+        ("Optimización de hiperparámetros", _hpo_detail(result.tuning)),
+        (
+            "Métricas",
+            "MAE/RMSE (unidades), WAPE (% error robusto), R² (varianza explicada); pinball, PICP y MPIW para los intervalos.",
+        ),
+        (
+            "Decisión y por qué",
+            "Con los cuantiles se calcula el fractil crítico Cu/(Cu+Co) → nivel objetivo S* → cantidad a pedir que minimiza el costo esperado de faltante+sobrante.",
+        ),
+    ]
+    insights = [
+        Insight(
+            text=f"WAPE = {m['wape']:.1%}: el error agregado es ~{m['wape'] * 100:.0f}% del volumen vendido; menor es mejor.",
+            severity=Severity.INFO,
+            tags=("metrica",),
+        ),
+        Insight(
+            text=f"PICP = {m['picp']:.0%} vs. 80% nominal: mide qué fracción de la demanda real cae dentro del intervalo (aquí sub-cubre, a calibrar).",
+            severity=Severity.WARNING if m["picp"] < 0.75 else Severity.GOOD,
+            tags=("metrica",),
+        ),
+        Insight(
+            text="No hay tarea de clasificación en este caso; de haberla, se reportarían accuracy/F1/ROC-AUC/PR-AUC (disponibles en el framework).",
+            severity=Severity.INFO,
+            tags=("nota",),
+        ),
+    ]
+    return _strategy_section(
+        "a_estrategia", "🚚 Caso A · Estrategia de modelamiento y validación", rows, insights
+    )
+
+
+def strategy_b(result: caso_b.CaseBResult) -> ReportSection:
+    hpo = (
+        (
+            f"Selección de k por máxima silhouette (barrido {list(result.k_selection['k'])}); "
+            f"k* = {result.store_clusters.nunique()}."
+        )
+        if result.k_selection is not None
+        else f"k fijado en {result.store_clusters.nunique()} (silhouette {result.silhouette:.2f})."
+    )
+    rows = [
+        (
+            "Tipo de tarea",
+            "Aprendizaje NO supervisado: clustering de tiendas + reglas de asociación.",
+        ),
+        (
+            "Modelos",
+            "K-Means (segmentación por perfil de compra) + FP-Growth (reglas de co-compra).",
+        ),
+        (
+            "¿Por qué?",
+            "No hay etiqueta objetivo; se busca estructura (segmentos) y patrones de co-compra para diseñar combos.",
+        ),
+        ("Partición train/test", "No aplica (no supervisado): se usa todo el histórico de cestas."),
+        ("Validación / selección", hpo + " Reglas filtradas por lift>1 y soporte mínimo."),
+        (
+            "Métricas",
+            "Clustering: silhouette (−1..1; cohesión vs. separación). Reglas: support, confidence, lift, conviction.",
+        ),
+        (
+            "Decisión y por qué",
+            "Por cada cluster se eligen los combos con mayor lift (co-compra más frecuente de lo esperado) y se fija un precio con descuento.",
+        ),
+    ]
+    insights = [
+        Insight(
+            text=f"Silhouette = {result.silhouette:.2f}: >0.25 indica segmentos razonablemente cohesionados y separados.",
+            severity=Severity.GOOD if result.silhouette > 0.25 else Severity.WARNING,
+            tags=("metrica",),
+        ),
+        Insight(
+            text="lift > 1 significa que dos productos se compran juntos MÁS de lo esperado por azar; es el criterio para proponer un combo.",
+            severity=Severity.INFO,
+            tags=("metrica",),
+        ),
+    ]
+    return _strategy_section(
+        "b_estrategia", "🥐 Caso B · Estrategia de modelamiento y validación", rows, insights
+    )
+
+
+def strategy_c(result: caso_c.CaseCResult) -> ReportSection:
+    pm = result.predictive_metrics
+    rows = [
+        (
+            "Tipo de tarea",
+            "Dos tareas: (1) inferencia de drivers del ticket; (2) regresión predictiva del gasto del cliente recurrente.",
+        ),
+        (
+            "Modelos",
+            "GLM gaussiano (inferencial, coeficientes + IC) + gradient boosting (predictivo, features RFM + loyalty).",
+        ),
+        (
+            "¿Por qué?",
+            "El GLM da efectos interpretables con significancia; el boosting captura no linealidades para predecir el gasto.",
+        ),
+        (
+            "Partición train/test",
+            "Predictivo: holdout aleatorio 80/20 sobre clientes recurrentes (≥2 visitas). GLM: se ajusta sobre todo el conjunto (inferencia, no predicción).",
+        ),
+        (
+            "Validación",
+            "Predictivo: métricas en holdout vs. baseline de la media. GLM: p-valores e IC95%; outliers winsorizados.",
+        ),
+        (
+            "Optimización de hiperparámetros",
+            _hpo_detail(result.tuning) + " (modelo predictivo, K-Fold).",
+        ),
+        (
+            "Métricas",
+            "GLM: β (efecto), p-valor (significancia), IC95%. Predictivo: MAE/RMSE/WAPE/R².",
+        ),
+        (
+            "Decisión y por qué",
+            "Los drivers significativos (p<0.05) orientan acciones de negocio; el modelo de gasto prioriza clientes por valor esperado.",
+        ),
+    ]
+    insights = [
+        Insight(
+            text=f"R² = {pm['r2']:.2f}: el modelo de gasto explica ~{pm['r2'] * 100:.0f}% de la varianza del ticket medio; 0 sería igual que predecir la media.",
+            severity=Severity.GOOD if pm["r2"] > 0.3 else Severity.WARNING,
+            tags=("metrica",),
+        ),
+        Insight(
+            text=f"MAE = {pm['mae']:.2f}: error absoluto medio en la misma unidad del ticket; WAPE = {pm['wape']:.1%} es su versión porcentual robusta.",
+            severity=Severity.INFO,
+            tags=("metrica",),
+        ),
+        Insight(
+            text="En el GLM, un p-valor < 0.05 indica que el efecto del driver es estadísticamente distinto de cero (con 95% de confianza).",
+            severity=Severity.INFO,
+            tags=("metrica",),
+        ),
+    ]
+    return _strategy_section(
+        "c_estrategia", "🧾 Caso C · Estrategia de modelamiento y validación", rows, insights
+    )
+
+
 def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
-    result = caso_a.run_case_a(weekly)
+    result = caso_a.run_case_a(weekly, tune=True, n_trials=20)
     test = result.test
     perf = ReportSection(
         id="a_modelo",
@@ -343,11 +540,11 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
         ),
     )
     interp.add_table("Muestra de pedidos recomendados", result.orders.head(15).round(2))
-    return [perf, interp]
+    return [strategy_a(result), perf, interp]
 
 
 def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list[ReportSection]:
-    result = caso_b.run_case_b(master_b, baskets)
+    result = caso_b.run_case_b(master_b, baskets, tune=True)
     seg = ReportSection(
         id="b_modelo",
         title="🥐 Caso B · Segmentación y reglas",
@@ -384,11 +581,13 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
         )["lift"]
         combos.add_figure("combos_lift", eda_viz.pareto(combo_lift, name="combo (lift)"))
         combos.add_table("Combos por cluster", result.combos)
-    return [seg, combos]
+    if result.k_selection is not None:
+        seg.add_table("Selección de k por silhouette", result.k_selection)
+    return [strategy_b(result), seg, combos]
 
 
 def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
-    result = caso_c.run_case_c(master_c)
+    result = caso_c.run_case_c(master_c, tune=True)
     drivers = ReportSection(
         id="c_modelo",
         title="🧾 Caso C · Drivers del ticket (GLM inferencial)",
@@ -415,7 +614,7 @@ def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
             cast(BaseModel, result.predictive_model), result.predictive_features, sample_size=120
         )
         pred.add_figure("shap", shap_summary_bar(shap_res))
-    return [drivers, pred]
+    return [strategy_c(result), drivers, pred]
 
 
 # --------------------------------------------------------------------------- #

@@ -26,6 +26,7 @@ class CaseBResult:
     combos: pd.DataFrame
     silhouette: float
     narrative: Narrative = field(default_factory=Narrative)
+    k_selection: pd.DataFrame | None = None
 
 
 def build_store_profiles(master_b: pd.DataFrame) -> pd.DataFrame:
@@ -58,6 +59,21 @@ def cluster_stores(
     model = KMeansModel(n_clusters=k, random_state=seed).fit(x)
     labels = pd.Series(model.predict(x), index=profiles.index, name="cluster")
     return labels, float(model.metadata.extra.get("silhouette", 0.0))
+
+
+def select_n_clusters(
+    profiles: pd.DataFrame, k_range: tuple[int, ...] = (2, 3, 4, 5, 6), seed: int = 42
+) -> tuple[int, pd.DataFrame]:
+    """Elige k por máxima silhouette barriendo un rango; devuelve (k*, tabla de barrido)."""
+    rows = []
+    for k in k_range:
+        if k >= len(profiles):
+            continue
+        _, sil = cluster_stores(profiles, n_clusters=k, seed=seed)
+        rows.append({"k": k, "silhouette": round(sil, 4)})
+    sweep = pd.DataFrame(rows)
+    best_k = int(sweep.loc[sweep["silhouette"].idxmax(), "k"]) if not sweep.empty else 3
+    return best_k, sweep
 
 
 def association_rules_for(
@@ -123,10 +139,22 @@ def top_combos_per_cluster(
 
 
 def run_case_b(
-    master_b: pd.DataFrame, baskets: pd.DataFrame, *, n_clusters: int = 3, top_n: int = 5
+    master_b: pd.DataFrame,
+    baskets: pd.DataFrame,
+    *,
+    n_clusters: int = 3,
+    top_n: int = 5,
+    tune: bool = False,
 ) -> CaseBResult:
-    """Ejecuta el Caso B completo: perfiles → clusters → reglas → combos."""
+    """Ejecuta el Caso B completo: perfiles → clusters → reglas → combos.
+
+    Si ``tune`` es ``True``, selecciona el número de clusters ``k`` maximizando la
+    silhouette sobre un barrido.
+    """
     profiles = build_store_profiles(master_b)
+    k_selection = None
+    if tune:
+        n_clusters, k_selection = select_n_clusters(profiles)
     clusters, silhouette = cluster_stores(profiles, n_clusters=n_clusters)
     rules = association_rules_for(baskets)
     combos = top_combos_per_cluster(master_b, baskets, clusters, top_n=top_n)
@@ -172,4 +200,6 @@ def run_case_b(
             tags=("caso_b", "combos"),
         )
     )
-    return CaseBResult(profiles, clusters, rules, combos, silhouette, narrative)
+    return CaseBResult(
+        profiles, clusters, rules, combos, silhouette, narrative, k_selection=k_selection
+    )
