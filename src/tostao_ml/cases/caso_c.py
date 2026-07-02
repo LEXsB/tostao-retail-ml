@@ -13,10 +13,17 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from tostao_ml.framework.evaluation import metrics
+from tostao_ml.framework.evaluation import kfold_splitter, metrics
 from tostao_ml.framework.features import RFMTransformer, Winsorizer
 from tostao_ml.framework.models import GBRRegressionModel, GLMModel
 from tostao_ml.framework.narrate import Insight, Narrative, Severity, rules
+from tostao_ml.framework.tuning import TuningResult, tune_model
+
+_HPO_SPACE = {
+    "learning_rate": {"type": "float", "low": 0.02, "high": 0.3, "log": True},
+    "max_depth": {"type": "int", "low": 2, "high": 8},
+    "max_iter": {"type": "int", "low": 80, "high": 350},
+}
 
 TARGET = "total_venta"
 _DRIVERS_NUM = [
@@ -41,6 +48,9 @@ class CaseCResult:
     predictive_metrics: dict[str, float]
     predictive_test: pd.DataFrame
     narrative: Narrative = field(default_factory=Narrative)
+    predictive_model: object = None
+    predictive_features: pd.DataFrame | None = None
+    tuning: TuningResult | None = None
 
 
 def _design_matrix(df: pd.DataFrame, num: list[str], cat: list[str]) -> pd.DataFrame:
@@ -83,9 +93,15 @@ def inferential_drivers(master_c: pd.DataFrame) -> tuple[pd.DataFrame, dict[str,
 
 
 def predictive_spend(
-    master_c: pd.DataFrame, *, seed: int = 42
-) -> tuple[dict[str, float], pd.DataFrame, Narrative]:
-    """Modelo predictivo del gasto esperado del cliente recurrente (features RFM + loyalty)."""
+    master_c: pd.DataFrame, *, seed: int = 42, tune: bool = False, n_trials: int = 20
+) -> tuple[
+    dict[str, float], pd.DataFrame, GBRRegressionModel, pd.DataFrame, TuningResult | None, Narrative
+]:
+    """Modelo predictivo del gasto esperado del cliente recurrente (features RFM + loyalty).
+
+    Si ``tune`` es ``True``, ajusta los hiperparámetros del boosting con Optuna
+    (K-Fold) optimizando el WAPE antes del entrenamiento final.
+    """
     rfm = RFMTransformer("id_cliente", "fecha", TARGET, score=False).fit_transform(master_c)
     profile = master_c.groupby("id_cliente", observed=True).agg(
         edad=("edad", "first"),
@@ -105,7 +121,29 @@ def predictive_spend(
     )
     rng = np.random.default_rng(seed)
     mask = rng.random(len(data)) < 0.8
-    model = GBRRegressionModel(max_iter=200, random_state=seed).fit(feat[mask], y[mask])
+
+    tuning: TuningResult | None = None
+    hp: dict[str, object] = {"max_iter": 200}
+    if tune:
+        try:
+            tuning = tune_model(
+                "gbr",
+                _HPO_SPACE,
+                feat[mask].reset_index(drop=True),
+                y[mask].reset_index(drop=True),
+                scorer=lambda m, xv, yv: metrics.wape(yv, m.predict(xv)),
+                splitter=kfold_splitter(n_splits=4, seed=seed),
+                direction="minimize",
+                n_trials=n_trials,
+                sampler="tpe",
+                pruner="none",
+                seed=seed,
+            )
+            hp = {k: tuning.best_params[k] for k in ("learning_rate", "max_depth", "max_iter")}
+        except (ValueError, RuntimeError):  # pragma: no cover - datos insuficientes
+            tuning = None
+
+    model = GBRRegressionModel(random_state=seed, **hp).fit(feat[mask], y[mask])  # type: ignore[arg-type]
     pred = model.predict(feat[~mask])
     test = data[~mask].assign(pred=pred)
 
@@ -131,14 +169,29 @@ def predictive_spend(
             title="Predicción de gasto",
         )
     )
-    return report, test, narrative
+    if tuning is not None:
+        narrative.extend(tuning.narrative)
+    return report, test, model, feat[~mask], tuning, narrative
 
 
-def run_case_c(master_c: pd.DataFrame, *, seed: int = 42) -> CaseCResult:
+def run_case_c(
+    master_c: pd.DataFrame, *, seed: int = 42, tune: bool = False, n_trials: int = 20
+) -> CaseCResult:
     """Ejecuta el Caso C completo: drivers inferenciales + gasto esperado."""
     coefs, inf_metrics, inf_narr = inferential_drivers(master_c)
-    pred_metrics, pred_test, pred_narr = predictive_spend(master_c, seed=seed)
+    pred_metrics, pred_test, pred_model, pred_feat, tuning, pred_narr = predictive_spend(
+        master_c, seed=seed, tune=tune, n_trials=n_trials
+    )
     narrative = Narrative()
     narrative.extend(inf_narr)
     narrative.extend(pred_narr)
-    return CaseCResult(coefs, inf_metrics, pred_metrics, pred_test, narrative)
+    return CaseCResult(
+        coefs,
+        inf_metrics,
+        pred_metrics,
+        pred_test,
+        narrative,
+        predictive_model=pred_model,
+        predictive_features=pred_feat,
+        tuning=tuning,
+    )

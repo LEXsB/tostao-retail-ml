@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from scipy import stats
 
-from .theme import COLORS, apply_theme
+from .theme import COLORS, QUALITATIVE, apply_theme
 
 
 def histogram_kde(series: pd.Series, name: str | None = None, nbins: int = 40) -> go.Figure:
@@ -182,6 +182,92 @@ def stacked_proportions(
     fig.update_yaxes(title="Proporción" if normalize else "Frecuencia")
     fig.update_xaxes(title=feature)
     return apply_theme(fig, title=f"Composición de «{target}» por «{feature}»")
+
+
+def target_bins(target: pd.Series, n_bins: int = 3) -> pd.Series:
+    """Discretiza un target continuo en grupos por cuantiles (Bajo/Medio/Alto…).
+
+    Permite «abrir» cualquier feature por nivel del objetivo aunque el target sea
+    numérico continuo.
+    """
+    labels = {
+        2: ["Bajo", "Alto"],
+        3: ["Bajo", "Medio", "Alto"],
+        4: ["Q1", "Q2", "Q3", "Q4"],
+        5: ["Q1", "Q2", "Q3", "Q4", "Q5"],
+    }.get(n_bins)
+    try:
+        return pd.qcut(target, q=n_bins, labels=labels, duplicates="drop")
+    except (ValueError, IndexError):  # pragma: no cover - pocos valores distintos
+        return pd.cut(target, bins=min(n_bins, target.nunique()), labels=None)
+
+
+def box_by_group(frame: pd.DataFrame, feature: str, group: str, max_groups: int = 8) -> go.Figure:
+    """Boxplot de una numérica por nivel de ``group`` (comparación de medianas/IQR)."""
+    levels = frame[group].value_counts().head(max_groups).index.tolist()
+    fig = go.Figure()
+    for i, level in enumerate(levels):
+        subset = frame.loc[frame[group] == level, feature].dropna().to_numpy(dtype=float)
+        fig.add_box(
+            y=subset, name=str(level), boxmean=True, marker_color=QUALITATIVE[i % len(QUALITATIVE)]
+        )
+    fig.update_yaxes(title=feature)
+    fig.update_xaxes(title=group)
+    return apply_theme(fig, title=f"«{feature}» por «{group}»")
+
+
+def overlaid_histograms(
+    frame: pd.DataFrame, feature: str, group: str, max_groups: int = 5
+) -> go.Figure:
+    """Histogramas de densidad superpuestos de una numérica por nivel de ``group``."""
+    levels = frame[group].value_counts().head(max_groups).index.tolist()
+    fig = go.Figure()
+    for i, level in enumerate(levels):
+        subset = frame.loc[frame[group] == level, feature].dropna().to_numpy(dtype=float)
+        fig.add_histogram(
+            x=subset,
+            histnorm="probability density",
+            opacity=0.55,
+            name=str(level),
+            marker_color=QUALITATIVE[i % len(QUALITATIVE)],
+            nbinsx=30,
+        )
+    fig.update_layout(barmode="overlay")
+    fig.update_xaxes(title=feature)
+    fig.update_yaxes(title="densidad")
+    return apply_theme(fig, title=f"Distribución de «{feature}» por «{group}»")
+
+
+def scatter_trend(
+    frame: pd.DataFrame, feature: str, target: str, max_points: int = 3000
+) -> go.Figure:
+    """Dispersión feature vs. target (continuo) con recta de tendencia (OLS)."""
+    df = frame[[feature, target]].dropna()
+    if len(df) > max_points:
+        df = df.sample(max_points, random_state=42)
+    x = df[feature].to_numpy(dtype=float)
+    y = df[target].to_numpy(dtype=float)
+    fig = go.Figure()
+    fig.add_scatter(
+        x=x,
+        y=y,
+        mode="markers",
+        marker={"color": COLORS["secondary"], "opacity": 0.4, "size": 5},
+        name="Observaciones",
+    )
+    if x.size >= 2 and np.ptp(x) > 0:
+        slope, intercept = np.polyfit(x, y, 1)
+        xs = np.linspace(x.min(), x.max(), 50)
+        fig.add_scatter(
+            x=xs,
+            y=slope * xs + intercept,
+            mode="lines",
+            line={"color": COLORS["accent"], "width": 2},
+            name="Tendencia (OLS)",
+        )
+    fig.update_xaxes(title=feature)
+    fig.update_yaxes(title=target)
+    return apply_theme(fig, title=f"«{feature}» vs. «{target}»")
 
 
 def missingness_bar(frame: pd.DataFrame, top: int = 30) -> go.Figure:

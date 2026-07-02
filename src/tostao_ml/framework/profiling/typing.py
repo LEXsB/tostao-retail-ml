@@ -92,7 +92,11 @@ def _infer_one(series: pd.Series, n: int, name: str, config: TypingConfig) -> Va
 
     # object / categórica / string
     unique_ratio = nunique / n if n else 0.0
-    if unique_ratio >= config.identifier_unique_ratio or (_looks_like_id(name) and nunique == n):
+    # Identificador si: casi todo único, o su nombre parece id y su cardinalidad
+    # supera el máximo de una categórica razonable (p. ej. id_cliente con miles).
+    if unique_ratio >= config.identifier_unique_ratio or (
+        _looks_like_id(name) and nunique > config.max_categorical_unique
+    ):
         return VariableKind.IDENTIFIER
     avg_len = non_null.astype(str).str.len().mean() if not non_null.empty else 0.0
     if avg_len and avg_len >= config.text_avg_len and nunique > config.max_categorical_unique:

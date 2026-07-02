@@ -12,11 +12,18 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from tostao_ml.framework.evaluation import metrics
+from tostao_ml.framework.evaluation import metrics, time_series_splitter
 from tostao_ml.framework.features import CyclicalEncoder, FrequencyEncoder, GroupLagFeatures
 from tostao_ml.framework.models import QuantileGBRModel
 from tostao_ml.framework.narrate import Insight, Narrative, Severity, rules
 from tostao_ml.framework.optimization import NewsvendorPolicy, expected_cost
+from tostao_ml.framework.tuning import TuningResult, tune_model
+
+_HPO_SPACE = {
+    "learning_rate": {"type": "float", "low": 0.02, "high": 0.3, "log": True},
+    "max_depth": {"type": "int", "low": 2, "high": 8},
+    "max_iter": {"type": "int", "low": 80, "high": 350},
+}
 
 GROUP = ["id_tienda", "id_producto"]
 TARGET = "unidades_vendidas"
@@ -44,6 +51,9 @@ class CaseAResult:
     cost_model: float
     cost_naive: float
     narrative: Narrative = field(default_factory=Narrative)
+    model: object = None
+    feature_names: list[str] = field(default_factory=list)
+    tuning: TuningResult | None = None
 
 
 def build_features_a(weekly: pd.DataFrame) -> pd.DataFrame:
@@ -69,18 +79,50 @@ def temporal_split(
     ].copy()
 
 
+def _tune_a(train: pd.DataFrame, seed: int, n_trials: int) -> TuningResult | None:
+    """Optimiza los hiperparámetros del boosting con walk-forward temporal (WAPE)."""
+    ordered = train.sort_values("semana")
+    try:
+        return tune_model(
+            "gbr",
+            _HPO_SPACE,
+            ordered[FEATURES],
+            ordered[TARGET],
+            scorer=lambda m, xv, yv: metrics.wape(yv, m.predict(xv)),
+            splitter=time_series_splitter(n_splits=3),
+            direction="minimize",
+            n_trials=n_trials,
+            sampler="tpe",
+            pruner="none",
+            seed=seed,
+        )
+    except (ValueError, RuntimeError):  # pragma: no cover - datos insuficientes
+        return None
+
+
 def run_case_a(
     weekly: pd.DataFrame,
     *,
     quantiles: tuple[float, ...] = (0.1, 0.5, 0.9),
     max_iter: int = 200,
     seed: int = 42,
+    tune: bool = False,
+    n_trials: int = 20,
 ) -> CaseAResult:
-    """Entrena, evalúa y optimiza el pedido para el Caso A."""
+    """Entrena, evalúa y optimiza el pedido para el Caso A.
+
+    Si ``tune`` es ``True``, ajusta los hiperparámetros del boosting con Optuna
+    sobre validación temporal walk-forward antes del entrenamiento final.
+    """
     features = build_features_a(weekly)
     train, test = temporal_split(features)
 
-    model = QuantileGBRModel(quantiles=quantiles, max_iter=max_iter, random_state=seed)
+    tuning = _tune_a(train, seed, n_trials) if tune else None
+    hp = {"learning_rate": 0.1, "max_depth": None, "max_iter": max_iter}
+    if tuning is not None:
+        hp = {k: tuning.best_params[k] for k in ("learning_rate", "max_depth", "max_iter")}
+
+    model = QuantileGBRModel(quantiles=quantiles, random_state=seed, **hp)  # type: ignore[arg-type]
     model.fit(train[FEATURES], train[TARGET])
 
     q_pred = model.predict_quantiles(test[FEATURES])
@@ -99,7 +141,19 @@ def run_case_a(
 
     orders, cost_model, cost_naive = _optimize_orders(test, q_pred, quantiles)
     narrative = _narrate(result_metrics, cost_model, cost_naive, quantiles)
-    return CaseAResult(result_metrics, test, orders, cost_model, cost_naive, narrative)
+    if tuning is not None:
+        narrative.extend(tuning.narrative)
+    return CaseAResult(
+        result_metrics,
+        test,
+        orders,
+        cost_model,
+        cost_naive,
+        narrative,
+        model=model,
+        feature_names=list(FEATURES),
+        tuning=tuning,
+    )
 
 
 def _optimize_orders(
