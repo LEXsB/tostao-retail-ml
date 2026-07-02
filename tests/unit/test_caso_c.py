@@ -52,7 +52,7 @@ def test_inferential_recovers_articulos_driver() -> None:
 
 @pytest.mark.unit
 def test_predictive_beats_baseline() -> None:
-    report, test, _model, _feat, _narrative = predictive_spend(_synthetic_master_c())
+    report, test, _model, _feat, _tuning, _narrative = predictive_spend(_synthetic_master_c())
     assert {"mae", "rmse", "wape", "r2", "wape_baseline"}.issubset(report)
     assert report["wape"] < report["wape_baseline"]  # mejora sobre la media
     assert "pred" in test.columns

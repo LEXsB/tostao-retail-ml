@@ -7,6 +7,16 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 ## [Sin publicar]
 
 ### Cambiado
+- **Detalle técnico del modelamiento en cada reporte**: sección corta "Estrategia
+  de modelamiento y validación" por caso que explica el tipo de tarea, el modelo y
+  por qué, la **partición train/test** (holdout temporal en A, 80/20 en C, no
+  aplica en B), la **validación** (walk-forward, silhouette, K-Fold), la
+  **optimización de hiperparámetros** con Optuna (mejor config + HP influyente),
+  las **métricas y qué significan** (incl. nota sobre clasificación) y la
+  **decisión que se toma y por qué**. Se elimina la versión simple de los EDA.
+- **HPO real activado** en la generación de reportes: Caso A (boosting cuantílico,
+  Optuna sobre walk-forward, WAPE↓ a ~12.7%), Caso C (boosting predictivo, Optuna
+  K-Fold, R²↑ a ~0.81) y Caso B (selección de k por barrido de silhouette → k=3).
 - **Reportes rehechos a fondo** (calidad EDA + presentación): tipado que ahora
   clasifica IDs de alta cardinalidad como identificadores (excluidos del describe);
   estadística univariada **separada** en numéricas (media/mediana/std/CV/skew/
