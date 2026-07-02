@@ -27,6 +27,8 @@ class CaseBResult:
     silhouette: float
     narrative: Narrative = field(default_factory=Narrative)
     k_selection: pd.DataFrame | None = None
+    clustering_comparison: pd.DataFrame | None = None
+    graph_centrality: pd.DataFrame | None = None
 
 
 def build_store_profiles(master_b: pd.DataFrame) -> pd.DataFrame:
@@ -74,6 +76,72 @@ def select_n_clusters(
     sweep = pd.DataFrame(rows)
     best_k = int(sweep.loc[sweep["silhouette"].idxmax(), "k"]) if not sweep.empty else 3
     return best_k, sweep
+
+
+def compare_clustering(
+    profiles: pd.DataFrame, k_range: tuple[int, ...] = (2, 3, 4, 5, 6), seed: int = 42
+) -> tuple[pd.DataFrame, str, int]:
+    """Compara K-Means vs. Aglomerativo por silhouette; devuelve (tabla, mejor_algo, mejor_k)."""
+    from sklearn.cluster import AgglomerativeClustering, KMeans
+    from sklearn.metrics import silhouette_score
+    from sklearn.preprocessing import StandardScaler
+
+    x = StandardScaler().fit_transform(profiles)
+    rows = []
+    for k in k_range:
+        if k >= len(profiles):
+            continue
+        km = KMeans(n_clusters=k, random_state=seed, n_init=10).fit_predict(x)
+        ag = AgglomerativeClustering(n_clusters=k).fit_predict(x)
+        rows.append(
+            {"algoritmo": "K-Means", "k": k, "silhouette": round(float(silhouette_score(x, km)), 4)}
+        )
+        rows.append(
+            {
+                "algoritmo": "Aglomerativo",
+                "k": k,
+                "silhouette": round(float(silhouette_score(x, ag)), 4),
+            }
+        )
+    table = pd.DataFrame(rows).sort_values("silhouette", ascending=False).reset_index(drop=True)
+    best = table.iloc[0]
+    return table, str(best["algoritmo"]), int(best["k"])
+
+
+def copurchase_graph_centrality(
+    baskets: pd.DataFrame, name_map: pd.Series, top: int = 12
+) -> pd.DataFrame:
+    """Grafo de co-compra: centralidad de eigenvector por producto (enfoque complementario a las reglas).
+
+    Nodos = productos; aristas = nº de cestas que contienen ambos. La centralidad
+    identifica los productos «hub» que conectan la red de co-compra.
+    """
+    import networkx as nx
+
+    binary = baskets.astype(int)
+    cooc = binary.T.dot(binary)
+    for prod in cooc.index:
+        cooc.loc[prod, prod] = 0
+    graph = nx.from_pandas_adjacency(cooc)
+    graph.remove_edges_from([(u, v) for u, v, w in graph.edges(data="weight") if not w])
+    try:
+        cent = nx.eigenvector_centrality_numpy(graph, weight="weight")
+    except (nx.NetworkXException, ValueError):  # pragma: no cover - grafo degenerado
+        cent = dict(nx.degree_centrality(graph))
+    degree = dict(graph.degree(weight="weight"))
+    out = (
+        pd.DataFrame(
+            {
+                "producto": [name_map.get(p, p) for p in cent],
+                "centralidad": [round(v, 4) for v in cent.values()],
+                "grado_ponderado": [int(degree.get(p, 0)) for p in cent],
+            }
+        )
+        .sort_values("centralidad", ascending=False)
+        .head(top)
+        .reset_index(drop=True)
+    )
+    return out
 
 
 def association_rules_for(
@@ -153,9 +221,16 @@ def run_case_b(
     """
     profiles = build_store_profiles(master_b)
     k_selection = None
+    clustering_comparison = None
+    graph_centrality = None
     if tune:
-        n_clusters, k_selection = select_n_clusters(profiles)
-    clusters, silhouette = cluster_stores(profiles, n_clusters=n_clusters)
+        _, k_selection = select_n_clusters(profiles)
+        clustering_comparison, best_algo, best_k = compare_clustering(profiles)
+        clusters, silhouette = _fit_clusters(profiles, best_algo, best_k)
+        name_map = master_b.groupby("id_producto", observed=True)["nombre"].first()
+        graph_centrality = copurchase_graph_centrality(baskets, name_map)
+    else:
+        clusters, silhouette = cluster_stores(profiles, n_clusters=n_clusters)
     rules = association_rules_for(baskets)
     combos = top_combos_per_cluster(master_b, baskets, clusters, top_n=top_n)
 
@@ -200,6 +275,44 @@ def run_case_b(
             tags=("caso_b", "combos"),
         )
     )
+    if clustering_comparison is not None:
+        best = clustering_comparison.iloc[0]
+        narrative.add(
+            Insight(
+                text=(
+                    f"Se compararon K-Means y Aglomerativo; el mejor fue «{best['algoritmo']}» "
+                    f"con k={int(best['k'])} (silhouette {best['silhouette']:.2f})."
+                ),
+                severity=Severity.INFO,
+                tags=("caso_b", "comparacion"),
+                title="Comparación de clustering",
+            )
+        )
     return CaseBResult(
-        profiles, clusters, rules, combos, silhouette, narrative, k_selection=k_selection
+        profiles,
+        clusters,
+        rules,
+        combos,
+        silhouette,
+        narrative,
+        k_selection=k_selection,
+        clustering_comparison=clustering_comparison,
+        graph_centrality=graph_centrality,
     )
+
+
+def _fit_clusters(
+    profiles: pd.DataFrame, algo: str, k: int, seed: int = 42
+) -> tuple[pd.Series, float]:
+    """Ajusta clusters con el algoritmo elegido y devuelve (etiquetas, silhouette)."""
+    if algo == "Aglomerativo":
+        from sklearn.cluster import AgglomerativeClustering
+        from sklearn.metrics import silhouette_score
+        from sklearn.preprocessing import StandardScaler
+
+        x = StandardScaler().fit_transform(profiles)
+        labels = AgglomerativeClustering(n_clusters=k).fit_predict(x)
+        return pd.Series(labels, index=profiles.index, name="cluster"), float(
+            silhouette_score(x, labels)
+        )
+    return cluster_stores(profiles, n_clusters=k, seed=seed)
