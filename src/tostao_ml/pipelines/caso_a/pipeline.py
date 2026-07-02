@@ -26,7 +26,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 node_forecast_and_optimize,
                 inputs=["master_caso_a_semanal", "params:caso_a"],
-                outputs=["a_forecast_metrics", "a_orders", "a_forecast_test", "a_narrative"],
+                outputs=[
+                    "a_forecast_metrics",
+                    "a_orders",
+                    "a_forecast_test",
+                    "a_narrative",
+                    "a_modelo",
+                ],
                 name="forecast_and_optimize_a",
             ),
         ],

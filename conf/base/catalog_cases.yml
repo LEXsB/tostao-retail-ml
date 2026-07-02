@@ -39,6 +39,12 @@ a_narrative:
   type: json.JSONDataset
   filepath: data/08_reporting/a_narrative.json
 
+# Modelo entrenado persistido (artefacto para calificar periodos futuros).
+a_modelo:
+  type: pickle.PickleDataset
+  filepath: data/06_models/modelo_caso_a.pkl
+  metadata: {kedro-viz: {layer: models}}
+
 # --- Caso B ---------------------------------------------------------------- #
 master_caso_b:
   type: pandas.ParquetDataset
@@ -95,3 +101,9 @@ c_predictive_test:
 c_narrative:
   type: json.JSONDataset
   filepath: data/08_reporting/c_narrative.json
+
+# Modelo predictivo de gasto persistido (artefacto para calificar periodos futuros).
+c_modelo:
+  type: pickle.PickleDataset
+  filepath: data/06_models/modelo_caso_c.pkl
+  metadata: {kedro-viz: {layer: models}}
