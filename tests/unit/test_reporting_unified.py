@@ -101,14 +101,15 @@ def test_unified_report_renders_all_cases() -> None:
     master_b, baskets_b = _master_b()
     report = build_unified_report(weekly_a, weekly_a, master_b, baskets_b, _master_c())
     html = report.render()
-    # Intro + EDA (resumen/target/multi por caso) + modelado por caso + glosario.
+    # Intro + historia de datos + EDA (target/multi por caso) + modelado interpretado.
     assert len(report.sections) >= 10
     for marker in (
         "Caso A",
         "Caso B",
         "Caso C",
         "Resumen ejecutivo",
-        "Glosario",
+        "Contexto y lectura de los datos",
+        "Qué son los datos",
         "Apertura por la variable objetivo",
         "Estrategia de modelamiento",
         "Optuna",

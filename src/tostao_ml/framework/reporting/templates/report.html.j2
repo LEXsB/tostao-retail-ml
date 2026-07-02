@@ -52,6 +52,11 @@
     .badge{display:inline-block;padding:.12rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;
            background:var(--cream);color:var(--coffee);margin-left:.5rem;border:1px solid var(--line)}
     .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+    .context{background:#FFF9F2;border-bottom:1px solid var(--line);padding:1.1rem 2.4rem}
+    .context h3{margin:.1rem 0 .3rem;color:var(--coffee);font-size:1.02rem}
+    .context .task{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);
+                   border-radius:10px;padding:.7rem 1rem;margin:.4rem 0 0}
+    .context p{margin:.25rem 0;color:#3f342b}
     footer{color:var(--muted);font-size:.82rem;padding:1.5rem 2.4rem;border-top:1px solid var(--line)}
     @media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
   </style>
@@ -61,6 +66,7 @@
     <h1>{{ title }}</h1>
     {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
   </header>
+  {% if context %}<div class="context">{{ context | safe }}</div>{% endif %}
   <div class="layout">
     <nav class="toc">
       <h2>Contenido</h2>

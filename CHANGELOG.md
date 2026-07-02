@@ -7,6 +7,14 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 ## [Sin publicar]
 
 ### Cambiado
+- **Storytelling e interpretación en los reportes** (`cases/storytelling.py`): cada
+  HTML abre con la **tarea propuesta** (contexto de negocio + objetivo, de la prueba
+  técnica) en el encabezado; una sección de **historia de los datos** describe con
+  cifras reales qué representan; e interpreta el EDA (qué discrimina el objetivo,
+  multicolinealidad, anomalías). Los resultados del modelo se leen en prosa: si son
+  **significativos** (p-valores, IC), si son **robustos** (validación, calibración
+  de intervalos) y qué **decisión** implican. Se elimina el glosario de definiciones;
+  cada figura/tabla acompaña a un análisis, sin salidas sueltas.
 - **Detalle técnico del modelamiento en cada reporte**: sección corta "Estrategia
   de modelamiento y validación" por caso que explica el tipo de tarea, el modelo y
   por qué, la **partición train/test** (holdout temporal en A, 80/20 en C, no
