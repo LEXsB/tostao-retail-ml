@@ -54,9 +54,10 @@ class ReportSection:
 class HTMLReport:
     """Constructor del reporte HTML unificado."""
 
-    def __init__(self, title: str, subtitle: str = "", footer: str = "") -> None:
+    def __init__(self, title: str, subtitle: str = "", footer: str = "", context: str = "") -> None:
         self.title = title
         self.subtitle = subtitle
+        self.context = context  # bloque HTML con la tarea/contexto de negocio (encabezado)
         self.footer = footer or "Reporte generado automáticamente por el pipeline de reporting."
         self.sections: list[ReportSection] = []
         self._env = Environment(
@@ -75,6 +76,7 @@ class HTMLReport:
         return template.render(
             title=self.title,
             subtitle=self.subtitle,
+            context=self.context,
             footer=self.footer,
             plotly_js=plotly_js_bundle(),
             sections=[self._render_section(s) for s in self.sections],

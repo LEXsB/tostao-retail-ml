@@ -1,11 +1,11 @@
 """Ensamblado de reportes HTML **completos** por caso y unificado.
 
-Cada reporte cubre, sobre la tabla maestra cruzada: diccionario de variables
-(tipado, IDs excluidos), estadística univariada separada por familia, **apertura
-de cada feature por la variable objetivo** (§4.3), multivariado (correlaciones,
-VIF, MI), modelado y desempeño, interpretabilidad, impacto de negocio y un
-**glosario** que explica cada métrica. Reutiliza el framework; aquí solo se
-orquesta y se narra.
+El reporte cuenta una historia: encabezado con la **tarea propuesta**, descripción
+e interpretación de los datos (EDA), y **lectura de los resultados** del modelo
+(si son significativos, si son robustos y qué decisión implican). Cada figura y
+tabla acompaña a un análisis; no hay salidas sueltas ni definiciones de métricas.
+Reutiliza el framework (``profiling``, ``performance``, ``interpret``) y la
+narración de ``storytelling``.
 """
 
 from __future__ import annotations
@@ -41,88 +41,7 @@ from tostao_ml.framework.viz import COLORS
 from tostao_ml.framework.viz import eda as eda_viz
 
 from . import caso_a, caso_b, caso_c
-
-# --------------------------------------------------------------------------- #
-# Glosario de métricas y estadísticos
-# --------------------------------------------------------------------------- #
-_GLOSSARY = [
-    ("MAE", "Regresión", "Error absoluto medio (misma unidad del target). Menor es mejor."),
-    (
-        "RMSE",
-        "Regresión",
-        "Raíz del error cuadrático medio; penaliza más los errores grandes. Menor es mejor.",
-    ),
-    (
-        "WAPE",
-        "Regresión",
-        "Σ|real−pred| / Σ|real|. Error porcentual robusto a ceros. Menor es mejor.",
-    ),
-    ("sMAPE", "Regresión", "MAPE simétrico ∈ [0,2]; evita división por cero. Menor es mejor."),
-    (
-        "R²",
-        "Regresión",
-        "Proporción de varianza explicada ∈ (−∞,1]. 0 = igual que predecir la media.",
-    ),
-    (
-        "Theil U2",
-        "Forecast",
-        "Error vs. pronóstico ingenuo (persistencia). <1 mejor que persistir.",
-    ),
-    (
-        "pinball",
-        "Intervalos",
-        "Pérdida cuantílica; penaliza asimétricamente según el cuantil. Menor es mejor.",
-    ),
-    (
-        "PICP",
-        "Intervalos",
-        "% de valores reales dentro del intervalo. Debe acercarse al nominal (p. ej. 80%).",
-    ),
-    ("MPIW", "Intervalos", "Ancho medio del intervalo. A igual cobertura, más estrecho es mejor."),
-    (
-        "lift",
-        "Asociación",
-        "confidence / P(consecuente). >1 indica co-compra más frecuente de lo esperado.",
-    ),
-    ("support", "Asociación", "Frecuencia relativa del itemset en las cestas."),
-    ("confidence", "Asociación", "P(consecuente | antecedente): fiabilidad de la regla."),
-    (
-        "silhouette",
-        "Clustering",
-        "Cohesión vs. separación ∈ [−1,1]. >0.25 sugiere estructura razonable.",
-    ),
-    ("VIF", "EDA", "Inflación de varianza por multicolinealidad. >5 moderada, >10 severa."),
-    (
-        "MI",
-        "EDA",
-        "Información mutua feature→target: señal lineal y no lineal. ≥0; mayor = más informativa.",
-    ),
-    ("Cramér's V", "EDA", "Asociación entre dos categóricas ∈ [0,1]."),
-    ("η (razón corr.)", "EDA", "Asociación numérica–categórica ∈ [0,1]."),
-    ("skewness", "EDA", "Asimetría de la distribución (0 = simétrica)."),
-    ("kurtosis", "EDA", "Apuntamiento/colas (0 = normal en exceso de curtosis)."),
-    ("entropy", "EDA", "Incertidumbre de una categórica en bits (mayor = más dispersa)."),
-    (
-        "Cohen's d / η²",
-        "EDA",
-        "Tamaño de efecto de una diferencia entre grupos (pequeño/mediano/grande).",
-    ),
-    (
-        "PSI",
-        "Monitoreo",
-        "Population Stability Index: drift entre distribuciones. >0.25 indica cambio.",
-    ),
-]
-
-
-def glossary_section() -> ReportSection:
-    """Sección con la explicación de cada métrica y estadístico usados."""
-    table = pd.DataFrame(_GLOSSARY, columns=["métrica", "categoría", "significado"])
-    return ReportSection(
-        id="glosario",
-        title="📖 Glosario de métricas y estadísticos",
-        description="Qué significa e cómo se interpreta cada indicador del reporte.",
-    ).add_table("Glosario", table)
+from . import storytelling as st
 
 
 def _pick(figures: dict[str, go.Figure], *prefixes: str) -> dict[str, go.Figure]:
@@ -361,21 +280,12 @@ def strategy_a(result: caso_a.CaseAResult) -> ReportSection:
     ]
     insights = [
         Insight(
-            text=f"WAPE = {m['wape']:.1%}: el error agregado es ~{m['wape'] * 100:.0f}% del volumen vendido; menor es mejor.",
-            severity=Severity.INFO,
-            tags=("metrica",),
-        ),
-        Insight(
-            text=f"PICP = {m['picp']:.0%} vs. 80% nominal: mide qué fracción de la demanda real cae dentro del intervalo (aquí sub-cubre, a calibrar).",
-            severity=Severity.WARNING if m["picp"] < 0.75 else Severity.GOOD,
-            tags=("metrica",),
-        ),
-        Insight(
             text="No hay tarea de clasificación en este caso; de haberla, se reportarían accuracy/F1/ROC-AUC/PR-AUC (disponibles en el framework).",
             severity=Severity.INFO,
             tags=("nota",),
         ),
     ]
+    _ = m  # las métricas se leen e interpretan en la sección de resultados
     return _strategy_section(
         "a_estrategia", "🚚 Caso A · Estrategia de modelamiento y validación", rows, insights
     )
@@ -414,20 +324,8 @@ def strategy_b(result: caso_b.CaseBResult) -> ReportSection:
             "Por cada cluster se eligen los combos con mayor lift (co-compra más frecuente de lo esperado) y se fija un precio con descuento.",
         ),
     ]
-    insights = [
-        Insight(
-            text=f"Silhouette = {result.silhouette:.2f}: >0.25 indica segmentos razonablemente cohesionados y separados.",
-            severity=Severity.GOOD if result.silhouette > 0.25 else Severity.WARNING,
-            tags=("metrica",),
-        ),
-        Insight(
-            text="lift > 1 significa que dos productos se compran juntos MÁS de lo esperado por azar; es el criterio para proponer un combo.",
-            severity=Severity.INFO,
-            tags=("metrica",),
-        ),
-    ]
     return _strategy_section(
-        "b_estrategia", "🥐 Caso B · Estrategia de modelamiento y validación", rows, insights
+        "b_estrategia", "🥐 Caso B · Estrategia de modelamiento y validación", rows, []
     )
 
 
@@ -467,25 +365,9 @@ def strategy_c(result: caso_c.CaseCResult) -> ReportSection:
             "Los drivers significativos (p<0.05) orientan acciones de negocio; el modelo de gasto prioriza clientes por valor esperado.",
         ),
     ]
-    insights = [
-        Insight(
-            text=f"R² = {pm['r2']:.2f}: el modelo de gasto explica ~{pm['r2'] * 100:.0f}% de la varianza del ticket medio; 0 sería igual que predecir la media.",
-            severity=Severity.GOOD if pm["r2"] > 0.3 else Severity.WARNING,
-            tags=("metrica",),
-        ),
-        Insight(
-            text=f"MAE = {pm['mae']:.2f}: error absoluto medio en la misma unidad del ticket; WAPE = {pm['wape']:.1%} es su versión porcentual robusta.",
-            severity=Severity.INFO,
-            tags=("metrica",),
-        ),
-        Insight(
-            text="En el GLM, un p-valor < 0.05 indica que el efecto del driver es estadísticamente distinto de cero (con 95% de confianza).",
-            severity=Severity.INFO,
-            tags=("metrica",),
-        ),
-    ]
+    _ = pm  # las métricas se leen e interpretan en la sección de resultados
     return _strategy_section(
-        "c_estrategia", "🧾 Caso C · Estrategia de modelamiento y validación", rows, insights
+        "c_estrategia", "🧾 Caso C · Estrategia de modelamiento y validación", rows, []
     )
 
 
@@ -494,9 +376,9 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
     test = result.test
     perf = ReportSection(
         id="a_modelo",
-        title="🚚 Caso A · Modelado y desempeño",
-        description="Forecast probabilístico de demanda semanal (modelo cuantílico) y su desempeño en el holdout temporal.",
-        narrative=result.narrative,
+        title="🚚 Caso A · Lectura de resultados y desempeño",
+        description="Se analiza si el pronóstico es bueno, si sus intervalos son fiables y qué impacto de negocio genera la política de pedido. Las figuras (predicho vs. real, residuales, error por producto) sustentan esta lectura.",
+        narrative=st.interpret_model_a(result),
     )
     perf.add_table(
         "Métricas de forecast",
@@ -547,9 +429,9 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
     result = caso_b.run_case_b(master_b, baskets, tune=True)
     seg = ReportSection(
         id="b_modelo",
-        title="🥐 Caso B · Segmentación y reglas",
-        description="Clusters de tiendas por perfil de compra y reglas de asociación de co-compra.",
-        narrative=result.narrative,
+        title="🥐 Caso B · Lectura de la segmentación y las reglas",
+        description="Se analiza si los clusters son válidos y si las reglas de co-compra son robustas (no ruido). Las tablas de perfil, reglas y el barrido de k sustentan la lectura.",
+        narrative=st.interpret_model_b(result),
     )
     profiles = result.store_profiles.join(result.store_clusters)
     seg.add_table("Perfil de tiendas + cluster", profiles.round(3).reset_index())
@@ -590,9 +472,9 @@ def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
     result = caso_c.run_case_c(master_c, tune=True)
     drivers = ReportSection(
         id="c_modelo",
-        title="🧾 Caso C · Drivers del ticket (GLM inferencial)",
-        description="Coeficientes del GLM con intervalos de confianza: qué mueve el ticket y en qué dirección.",
-        narrative=result.narrative,
+        title="🧾 Caso C · Lectura de resultados (drivers y predicción)",
+        description="Se analiza qué drivers mueven el ticket y si son significativos, y qué tan bien predice el gasto el modelo. Los coeficientes con IC y las métricas sustentan la lectura.",
+        narrative=st.interpret_model_c(result),
     )
     drivers.add_figure("coeficientes", _coef_figure(result.coefficients))
     drivers.add_table("Coeficientes (β, error, p-valor, IC 95%)", result.coefficients.round(4))
@@ -620,8 +502,24 @@ def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
 # --------------------------------------------------------------------------- #
 # Reportes completos
 # --------------------------------------------------------------------------- #
+_DATA_STORY = {"a": st.data_story_a, "b": st.data_story_b, "c": st.data_story_c}
+
+
+def _story_section(case_key: str, frame: pd.DataFrame, profile: DatasetProfile) -> ReportSection:
+    """Sección de apertura: historia de los datos + lectura del EDA (interpretación)."""
+    narr = Narrative()
+    narr.extend(_DATA_STORY[case_key](frame))
+    narr.extend(st.interpret_eda(profile))
+    return ReportSection(
+        id=f"{case_key}_datos",
+        title="Contexto y lectura de los datos",
+        description="Qué representan los datos y qué revela el análisis exploratorio antes de modelar.",
+        narrative=narr,
+    )
+
+
 def full_case_report(
-    name: str,
+    case_key: str,
     title: str,
     frame: pd.DataFrame,
     target: str,
@@ -629,19 +527,20 @@ def full_case_report(
     join_report: dict[str, float] | None,
     model_sections: list[ReportSection],
 ) -> HTMLReport:
-    """Reporte HTML completo de un caso: EDA + modelado + glosario."""
-    profile = profile_dataset(frame, name=name, target=target)
+    """Reporte HTML completo de un caso: contexto → datos → EDA → modelado interpretado."""
+    profile = profile_dataset(frame, name=case_key, target=target)
     report = HTMLReport(
         title=title,
-        subtitle=f"EDA + modelado sobre la tabla maestra cruzada — {len(frame):,} filas × {frame.shape[1]} columnas",
+        subtitle=f"De los datos crudos a la decisión — tabla maestra de {len(frame):,} filas × {frame.shape[1]} columnas",
+        context=st.context_html(case_key),
     )
+    report.add_section(_story_section(case_key, frame, profile))
     for section in eda_sections(
-        frame, profile, prefix=name, join_report=join_report, description=description, full=True
+        frame, profile, prefix=case_key, join_report=join_report, description=description, full=True
     ):
         report.add_section(section)
     for section in model_sections:
         report.add_section(section)
-    report.add_section(glossary_section())
     return report
 
 
@@ -699,11 +598,12 @@ def build_unified_report(
         ),
     ]:
         profile = profile_dataset(frame, name=prefix, target=target)
+        report.add_section(_story_section(prefix, frame, profile))
         # EDA condensado (diccionario + target + multivariado; sin todas las figuras univariadas).
         for section in eda_sections(
             frame, profile, prefix=f"u{prefix}", join_report=None, description=desc, full=False
         ):
-            if section.id.endswith(("_target", "_multi", "_resumen")):
+            if section.id.endswith(("_target", "_multi")):
                 report.add_section(section)
 
     for section in case_a_model_sections(weekly_a):
@@ -712,5 +612,4 @@ def build_unified_report(
         report.add_section(section)
     for section in case_c_model_sections(master_c):
         report.add_section(section)
-    report.add_section(glossary_section())
     return report
