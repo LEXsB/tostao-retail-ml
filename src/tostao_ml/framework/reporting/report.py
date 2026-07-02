@@ -55,6 +55,7 @@ class HTMLReport:
     """Constructor del reporte HTML unificado."""
 
     def __init__(self, title: str, subtitle: str = "", footer: str = "", context: str = "") -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.title = title
         self.subtitle = subtitle
         self.context = context  # bloque HTML con la tarea/contexto de negocio (encabezado)

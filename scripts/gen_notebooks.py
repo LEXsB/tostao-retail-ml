@@ -32,9 +32,12 @@ def setup_notebook() -> nbf.NotebookNode:
     return new_notebook(
         cells=[
             new_markdown_cell(
-                "# 00 · Setup del entorno\n\n"
-                "Verifico el entorno, abro la sesión de Kedro y confirmo que el catálogo "
-                "expone las 12 fuentes crudas. Todos los notebooks parten de aquí."
+                "# 00 - Setup del entorno\n\n"
+                "> **Objetivo.** Verificar el entorno reproducible, abrir la sesión de Kedro y "
+                "confirmar que el catálogo expone las 12 fuentes crudas por caso.\n\n"
+                "> **Salidas.** La lista de datasets del catálogo; punto de partida común de "
+                "todos los notebooks.\n\n"
+                "> **Cómo ejecutar.** `Restart & Run All`; determinista."
             ),
             new_code_cell(
                 "from pathlib import Path\n"
@@ -75,9 +78,20 @@ def eda_notebook(
         "    catalog = session.load_context().catalog\n"
         f"{builder_call}"
     )
+    docstring = (
+        f"# {case} - EDA sobre la tabla maestra\n\n"
+        f"> **Objetivo.** {intro}\n\n"
+        f"> **Entradas.** Fuentes crudas del caso cargadas por el catálogo de Kedro "
+        f"(`data/01_raw`), sin `pd.read_csv` sueltos.\n\n"
+        f"> **Salidas.** La tabla maestra cruzada, su diagnóstico de cobertura y las "
+        f"conclusiones del EDA (tipado, VIF, correlaciones, información mutua, tests).\n\n"
+        f"> **Cómo ejecutar.** Reinicia el kernel y ejecuta todo de arriba abajo "
+        f"(`Restart & Run All`); es determinista. Reutiliza `tostao_ml` (no reimplementa "
+        f"lógica): el notebook orquesta y narra."
+    )
     return new_notebook(
         cells=[
-            new_markdown_cell(f"# {case} · EDA sobre la tabla maestra\n\n{intro}"),
+            new_markdown_cell(docstring),
             new_markdown_cell(
                 f"## 1. Construcción de la tabla maestra (cruce de fuentes)\n\n{joins_md}"
             ),

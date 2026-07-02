@@ -6,6 +6,22 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Sin publicar]
 
+### Limpieza y documentación
+- **Sin emojis ni iconos** en ningún archivo (código, plantilla HTML, reportes,
+  notebooks, docs, README). Los niveles de severidad se rinden con etiqueta textual
+  (OK/Nota/Aviso/Alerta) y color CSS, no con iconos.
+- **Archivos sin uso eliminados**: `evaluation/kpis.py` y `io/hashing.py` (no los
+  usaba ningún pipeline) y el script redundante `build_unified_report.py`. El
+  generador de reportes se renombró a `scripts/build_reports.py` (genera los cuatro
+  HTML). `set_global_seed` se cableó en los tres casos (reproducibilidad efectiva).
+- **Documentación**: README general revisado + un documento por caso
+  (`docs/caso_a.md`, `docs/caso_b.md`, `docs/caso_c.md`) explicando cómo funciona
+  cada uno; navegación de MkDocs actualizada.
+- **Docstrings** en todas las funciones y clases públicas; notebooks con un
+  encabezado estructurado (objetivo, entradas, salidas, ejecución).
+- **Nombres**: Python idiomático en español (snake_case/PascalCase), sin ñ en
+  identificadores; términos técnicos/acrónimos de ML se mantienen en su forma estándar.
+
 ### Añadido (multi-modelo por caso)
 - **Validación de varios modelos + ensemble por caso** (framework: `models/ensemble.py`
   con `AveragingEnsemble`; `evaluation/comparison.py` con `compare_models` y

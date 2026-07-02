@@ -37,6 +37,7 @@ class GLMModel(BaseModel):
     def __init__(
         self, family: str = "gaussian", add_constant: bool = True, **kwargs: object
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="glm")
         if family not in _FAMILIES:
             raise ValueError(f"Familia GLM desconocida: {family}. Opciones: {sorted(_FAMILIES)}")
@@ -49,6 +50,7 @@ class GLMModel(BaseModel):
         return sm.add_constant(X, has_constant="add") if self.add_constant else X
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> GLMModel:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         design = self._design(X)
         family = _FAMILIES[self.family]()
         self._result = sm.GLM(np.asarray(y, dtype=float), design, family=family).fit()
@@ -59,6 +61,7 @@ class GLMModel(BaseModel):
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         return np.asarray(self._result.predict(self._design(X)))
 

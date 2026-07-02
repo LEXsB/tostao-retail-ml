@@ -50,6 +50,7 @@ class BaseModel(ABC):
     task: TaskType
 
     def __init__(self, name: str) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.name = name
         self.metadata = ModelMetadata(name=name, task=self.task)
         self.is_fitted_ = False

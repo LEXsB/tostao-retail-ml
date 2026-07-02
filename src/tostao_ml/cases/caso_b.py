@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 from mlxtend.frequent_patterns import association_rules, fpgrowth
 
+from tostao_ml.framework.io import set_global_seed
 from tostao_ml.framework.models import KMeansModel
 from tostao_ml.framework.narrate import Insight, Narrative, Severity
 
@@ -219,6 +220,7 @@ def run_case_b(
     Si ``tune`` es ``True``, selecciona el número de clusters ``k`` maximizando la
     silhouette sobre un barrido.
     """
+    set_global_seed(42)
     profiles = build_store_profiles(master_b)
     k_selection = None
     clustering_comparison = None

@@ -18,7 +18,7 @@ from tostao_ml.framework.profiling.engine import DatasetProfile
 # --------------------------------------------------------------------------- #
 TASKS: dict[str, dict[str, str]] = {
     "a": {
-        "titulo": "🚚 Caso A — Optimización de Abastecimiento",
+        "titulo": "Caso A — Optimización de Abastecimiento",
         "contexto": (
             "Predecir la demanda es solo la mitad de la batalla: si pedimos de menos "
             "perdemos ventas (costo de oportunidad); si pedimos de más, incurrimos en "
@@ -32,7 +32,7 @@ TASKS: dict[str, dict[str, str]] = {
         ),
     },
     "b": {
-        "titulo": "🥐 Caso B — Creación de Combos",
+        "titulo": "Caso B — Creación de Combos",
         "contexto": (
             "Se busca incrementar el ticket promedio mediante venta cruzada, identificando "
             "patrones de compra no evidentes para generar recomendaciones automáticas."
@@ -44,7 +44,7 @@ TASKS: dict[str, dict[str, str]] = {
         ),
     },
     "c": {
-        "titulo": "🧾 Caso C — Modelado del Ticket Promedio (AOV)",
+        "titulo": "Caso C — Modelado del Ticket Promedio (AOV)",
         "contexto": (
             "Existe alta variabilidad en el ticket promedio (AOV) entre sucursales; se "
             "requiere entender qué factores exógenos y endógenos lo influyen."
@@ -76,6 +76,7 @@ def _p(text: str, severity: Severity = Severity.INFO, title: str | None = None) 
 # Historia de los datos
 # --------------------------------------------------------------------------- #
 def data_story_a(weekly: pd.DataFrame) -> Narrative:
+    """Narra que representan los datos del Caso A (demanda semanal SKU-tienda)."""
     n = len(weekly)
     n_series = weekly.groupby(["id_tienda", "id_producto"]).ngroups
     n_stores, n_products = weekly["id_tienda"].nunique(), weekly["id_producto"].nunique()
@@ -100,6 +101,7 @@ def data_story_a(weekly: pd.DataFrame) -> Narrative:
 
 
 def data_story_b(master_b: pd.DataFrame) -> Narrative:
+    """Narra que representan los datos del Caso B (lineas de ticket)."""
     n_lines = len(master_b)
     n_tickets = master_b["id_ticket"].nunique()
     n_products = master_b["id_producto"].nunique()
@@ -121,6 +123,7 @@ def data_story_b(master_b: pd.DataFrame) -> Narrative:
 
 
 def data_story_c(master_c: pd.DataFrame) -> Narrative:
+    """Narra que representan los datos del Caso C (tickets enriquecidos)."""
     n = len(master_c)
     n_clients = master_c["id_cliente"].nunique()
     n_stores = master_c["id_tienda"].nunique() if "id_tienda" in master_c else 0
@@ -229,6 +232,7 @@ def _verdict_wape(w: float) -> str:
 
 
 def interpret_model_a(result) -> Narrative:
+    """Interpreta los resultados del Caso A (calidad, intervalos, negocio)."""
     m = result.metrics
     narr = Narrative()
     rel = (m["wape_naive"] - m["wape"]) / m["wape_naive"] * 100 if m["wape_naive"] else 0.0
@@ -289,6 +293,7 @@ def interpret_model_a(result) -> Narrative:
 
 
 def interpret_model_b(result) -> Narrative:
+    """Interpreta los resultados del Caso B (validez de clusters y reglas)."""
     narr = Narrative()
     sil = result.silhouette
     k = int(result.store_clusters.nunique())
@@ -340,6 +345,7 @@ def interpret_model_b(result) -> Narrative:
 
 
 def interpret_model_c(result) -> Narrative:
+    """Interpreta los resultados del Caso C (drivers significativos y prediccion)."""
     narr = Narrative()
     coefs = result.coefficients
     sig = coefs[coefs["pvalue"] < 0.05]
