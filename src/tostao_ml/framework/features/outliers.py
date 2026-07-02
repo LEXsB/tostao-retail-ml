@@ -24,11 +24,13 @@ class Winsorizer(PandasTransformer):
     def __init__(
         self, columns: list[str], lower_quantile: float = 0.01, upper_quantile: float = 0.99
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.columns = columns
         self.lower_quantile = lower_quantile
         self.upper_quantile = upper_quantile
 
     def fit(self, X: pd.DataFrame, y: object = None) -> Winsorizer:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         self.bounds_: dict[str, tuple[float, float]] = {}
         for col in self.columns:
@@ -39,6 +41,7 @@ class Winsorizer(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         for col in self.columns:
             lo, hi = self.bounds_[col]

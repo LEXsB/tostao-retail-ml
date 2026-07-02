@@ -32,6 +32,7 @@ class RFMTransformer(PandasTransformer):
         reference_date: pd.Timestamp | None = None,
         score: bool = True,
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.customer_col = customer_col
         self.date_col = date_col
         self.monetary_col = monetary_col
@@ -39,6 +40,7 @@ class RFMTransformer(PandasTransformer):
         self.score = score
 
     def fit(self, X: pd.DataFrame, y: object = None) -> RFMTransformer:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         cols = ["recency", "frequency", "monetary", "monetary_mean"]
         if self.score:
             cols += ["r_score", "f_score", "m_score", "rfm_score"]
@@ -46,6 +48,7 @@ class RFMTransformer(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         X[self.date_col] = pd.to_datetime(X[self.date_col])
         ref = self.reference_date or (X[self.date_col].max() + pd.Timedelta(days=1))

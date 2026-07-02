@@ -22,11 +22,13 @@ class FrequencyEncoder(PandasTransformer):
     def __init__(
         self, columns: list[str], suffix: str = "_freq", drop_original: bool = True
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.columns = columns
         self.suffix = suffix
         self.drop_original = drop_original
 
     def fit(self, X: pd.DataFrame, y: object = None) -> FrequencyEncoder:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         self.frequencies_: dict[str, dict] = {}
         for col in self.columns:
@@ -36,6 +38,7 @@ class FrequencyEncoder(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         for col in self.columns:
             X[f"{col}{self.suffix}"] = X[col].map(self.frequencies_[col]).fillna(0.0)

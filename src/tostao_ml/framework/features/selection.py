@@ -22,10 +22,12 @@ class VIFSelector(PandasTransformer):
     """
 
     def __init__(self, threshold: float = 10.0, columns: list[str] | None = None) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.threshold = threshold
         self.columns = columns
 
     def fit(self, X: pd.DataFrame, y: object = None) -> VIFSelector:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         candidates = list(self.columns) if self.columns else list(X.select_dtypes("number").columns)
         self.dropped_: list[str] = []
@@ -41,6 +43,7 @@ class VIFSelector(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X)
         return X.drop(columns=[c for c in self.dropped_ if c in X.columns])
 
@@ -56,10 +59,12 @@ class CorrelationSelector(PandasTransformer):
     """
 
     def __init__(self, threshold: float = 0.95, method: str = "pearson") -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.threshold = threshold
         self.method = method
 
     def fit(self, X: pd.DataFrame, y: object = None) -> CorrelationSelector:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         numeric = X.select_dtypes("number")
         corr = numeric.corr(method=self.method).abs()
@@ -75,5 +80,6 @@ class CorrelationSelector(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X)
         return X.drop(columns=[c for c in self.dropped_ if c in X.columns])

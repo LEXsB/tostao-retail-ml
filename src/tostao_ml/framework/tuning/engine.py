@@ -113,6 +113,7 @@ def tune_model(
     fixed_params = fixed_params or {}
 
     def objective(trial: optuna.Trial) -> float:
+        """Funcion objetivo del estudio: metrica media en validacion cruzada."""
         params = {**fixed_params, **suggest_params(trial, search_space)}
         scores: list[float] = []
         for train_idx, val_idx in splitter(X):

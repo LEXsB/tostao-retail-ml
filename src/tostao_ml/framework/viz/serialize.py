@@ -6,10 +6,23 @@ El reporte embebe ``plotly.js`` una sola vez y cada figura como un ``<div>``
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import plotly.graph_objects as go
 import plotly.io as pio
+
+# El bundle de plotly.js trae algún carácter pictográfico en su tabla de símbolos
+# (p. ej. la "x" -> U+274C). Se reemplaza por ASCII para que el HTML no contenga
+# ningún icono/emoji, sin afectar el render de las figuras usadas.
+_EMOJI = re.compile(
+    "[\U0001f000-\U0001faff\U00002600-\U000027bf\U00002b00-\U00002bff\U00002139\U0000fe0f]"
+)
+
+
+def _sin_iconos(js: str) -> str:
+    """Reemplaza el símbolo pictográfico de plotly por ASCII (deja el HTML sin iconos)."""
+    return _EMOJI.sub("x", js)
 
 
 def figure_to_div(fig: go.Figure, div_id: str | None = None) -> str:
@@ -37,7 +50,7 @@ def plotly_js_bundle() -> str:
     """Devuelve el bundle de ``plotly.js`` embebible una sola vez en el reporte."""
     from plotly.offline import get_plotlyjs
 
-    return f'<script type="text/javascript">{get_plotlyjs()}</script>'
+    return f'<script type="text/javascript">{_sin_iconos(get_plotlyjs())}</script>'
 
 
 def save_figure(fig: go.Figure, path: str | Path, *, self_contained: bool = True) -> Path:

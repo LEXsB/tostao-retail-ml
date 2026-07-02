@@ -19,6 +19,7 @@ from tostao_ml.framework.evaluation import (
     time_series_splitter,
 )
 from tostao_ml.framework.features import CyclicalEncoder, FrequencyEncoder, GroupLagFeatures
+from tostao_ml.framework.io import set_global_seed
 from tostao_ml.framework.models import (
     AveragingEnsemble,
     GBRRegressionModel,
@@ -125,6 +126,7 @@ def run_case_a(
     Si ``tune`` es ``True``, ajusta los hiperparámetros del boosting con Optuna
     sobre validación temporal walk-forward antes del entrenamiento final.
     """
+    set_global_seed(seed)
     features = build_features_a(weekly)
     train, test = temporal_split(features)
 

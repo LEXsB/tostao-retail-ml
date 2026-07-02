@@ -29,6 +29,7 @@ class AveragingEnsemble(BaseModel):
     def __init__(
         self, estimators: list[tuple[str, BaseModel]], weights: list[float] | None = None
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="ensemble_promedio")
         if not estimators:
             raise ValueError("El ensemble requiere al menos un modelo base.")
@@ -41,6 +42,7 @@ class AveragingEnsemble(BaseModel):
         }
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> AveragingEnsemble:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         for _, model in self.estimators:
             if not model.is_fitted_:
                 model.fit(X, y)
@@ -49,6 +51,7 @@ class AveragingEnsemble(BaseModel):
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         preds = np.column_stack([model.predict(X) for _, model in self.estimators])
         return np.asarray(preds @ self.weights, dtype=float)

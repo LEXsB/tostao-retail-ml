@@ -20,7 +20,7 @@ sobre un mismo núcleo: abastecimiento (A), combos (B) y AOV (C).
 ```bash
 uv sync --extra caso_b --extra serving --group dev
 uv run kedro run                 # ejecuta los tres casos
-uv run python scripts/build_unified_report.py
+uv run python scripts/build_reports.py   # reportes HTML por caso + unificado
 uv run uvicorn serving.api.main:app --reload
 ```
 

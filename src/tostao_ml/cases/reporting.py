@@ -246,6 +246,7 @@ def _strategy_section(
 
 
 def strategy_a(result: caso_a.CaseAResult) -> ReportSection:
+    """Seccion con la estrategia de modelamiento y validacion del Caso A."""
     m = result.metrics
     rows = [
         (
@@ -287,11 +288,12 @@ def strategy_a(result: caso_a.CaseAResult) -> ReportSection:
     ]
     _ = m  # las métricas se leen e interpretan en la sección de resultados
     return _strategy_section(
-        "a_estrategia", "🚚 Caso A · Estrategia de modelamiento y validación", rows, insights
+        "a_estrategia", "Caso A · Estrategia de modelamiento y validación", rows, insights
     )
 
 
 def strategy_b(result: caso_b.CaseBResult) -> ReportSection:
+    """Seccion con la estrategia de modelamiento y validacion del Caso B."""
     hpo = (
         (
             f"Selección de k por máxima silhouette (barrido {list(result.k_selection['k'])}); "
@@ -325,11 +327,12 @@ def strategy_b(result: caso_b.CaseBResult) -> ReportSection:
         ),
     ]
     return _strategy_section(
-        "b_estrategia", "🥐 Caso B · Estrategia de modelamiento y validación", rows, []
+        "b_estrategia", "Caso B · Estrategia de modelamiento y validación", rows, []
     )
 
 
 def strategy_c(result: caso_c.CaseCResult) -> ReportSection:
+    """Seccion con la estrategia de modelamiento y validacion del Caso C."""
     pm = result.predictive_metrics
     rows = [
         (
@@ -367,16 +370,17 @@ def strategy_c(result: caso_c.CaseCResult) -> ReportSection:
     ]
     _ = pm  # las métricas se leen e interpretan en la sección de resultados
     return _strategy_section(
-        "c_estrategia", "🧾 Caso C · Estrategia de modelamiento y validación", rows, []
+        "c_estrategia", "Caso C · Estrategia de modelamiento y validación", rows, []
     )
 
 
 def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
+    """Construye las secciones de modelado e interpretabilidad del Caso A."""
     result = caso_a.run_case_a(weekly, tune=True, n_trials=20)
     test = result.test
     perf = ReportSection(
         id="a_modelo",
-        title="🚚 Caso A · Lectura de resultados y desempeño",
+        title="Caso A · Lectura de resultados y desempeño",
         description="Se analiza si el pronóstico es bueno, si sus intervalos son fiables y qué impacto de negocio genera la política de pedido. Las figuras (predicho vs. real, residuales, error por producto) sustentan esta lectura.",
         narrative=st.interpret_model_a(result),
     )
@@ -412,7 +416,7 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
 
     interp = ReportSection(
         id="a_interpret",
-        title="🚚 Caso A · Interpretabilidad y negocio",
+        title="Caso A · Interpretabilidad y negocio",
         description="Importancia de features (permutación) e impacto económico del optimizador de pedido.",
     )
     if result.model is not None:
@@ -436,10 +440,11 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
 
 
 def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list[ReportSection]:
+    """Construye las secciones de segmentacion, reglas y combos del Caso B."""
     result = caso_b.run_case_b(master_b, baskets, tune=True)
     seg = ReportSection(
         id="b_modelo",
-        title="🥐 Caso B · Lectura de la segmentación y las reglas",
+        title="Caso B · Lectura de la segmentación y las reglas",
         description="Se analiza si los clusters son válidos y si las reglas de co-compra son robustas (no ruido). Las tablas de perfil, reglas y el barrido de k sustentan la lectura.",
         narrative=st.interpret_model_b(result),
     )
@@ -463,7 +468,7 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
 
     combos = ReportSection(
         id="b_combos",
-        title="🥐 Caso B · Combos propuestos",
+        title="Caso B · Combos propuestos",
         description="Top combos por cluster con precio propuesto (descuento) y lift esperado.",
     )
     if not result.combos.empty:
@@ -488,10 +493,11 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
 
 
 def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
+    """Construye las secciones de drivers y prediccion del Caso C."""
     result = caso_c.run_case_c(master_c, tune=True)
     drivers = ReportSection(
         id="c_modelo",
-        title="🧾 Caso C · Lectura de resultados (drivers y predicción)",
+        title="Caso C · Lectura de resultados (drivers y predicción)",
         description="Se analiza qué drivers mueven el ticket y si son significativos, y qué tan bien predice el gasto el modelo. Los coeficientes con IC y las métricas sustentan la lectura.",
         narrative=st.interpret_model_c(result),
     )
@@ -500,7 +506,7 @@ def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
 
     pred = ReportSection(
         id="c_pred",
-        title="🧾 Caso C · Predicción de gasto e interpretabilidad",
+        title="Caso C · Predicción de gasto e interpretabilidad",
         description="Modelo de gasto esperado del cliente recurrente (RFM + loyalty) e importancia de features (SHAP).",
     )
     test = result.predictive_test
