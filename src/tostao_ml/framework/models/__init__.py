@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from .base import BaseModel, ModelMetadata
 from .clustering import KMeansModel
+from .ensemble import AveragingEnsemble
 from .linear import GLMModel
 from .registry import available_models, build_model, register_model
 from .regression import GBRRegressionModel, QuantileGBRModel, RidgeRegressionModel
 
 __all__ = [
+    "AveragingEnsemble",
     "BaseModel",
     "GBRRegressionModel",
     "GLMModel",

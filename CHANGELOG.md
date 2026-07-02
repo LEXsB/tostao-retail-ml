@@ -6,6 +6,17 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Sin publicar]
 
+### Añadido (multi-modelo por caso)
+- **Validación de varios modelos + ensemble por caso** (framework: `models/ensemble.py`
+  con `AveragingEnsemble`; `evaluation/comparison.py` con `compare_models` y
+  `narrate_comparison`). Caso A: compara Ridge / GBR / cuantílico / **ensemble** en
+  el holdout (Ridge resultó mejor, WAPE 12.0% vs 13.0%). Caso C: compara el
+  predictivo Ridge / GBR / **ensemble** (Ridge mejor, R² 0.81 vs 0.77). Caso B:
+  compara **K-Means vs. Aglomerativo** por silhouette y añade un **grafo de
+  co-compra** (networkx) con centralidad para revelar productos «hub»,
+  complementando las reglas de asociación. Cada reporte incluye la tabla y el
+  gráfico de comparación con su interpretación.
+
 ### Cambiado
 - **Storytelling e interpretación en los reportes** (`cases/storytelling.py`): cada
   HTML abre con la **tarea propuesta** (contexto de negocio + objetivo, de la prueba

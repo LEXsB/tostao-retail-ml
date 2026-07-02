@@ -12,9 +12,19 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from tostao_ml.framework.evaluation import metrics, time_series_splitter
+from tostao_ml.framework.evaluation import (
+    compare_models,
+    metrics,
+    narrate_comparison,
+    time_series_splitter,
+)
 from tostao_ml.framework.features import CyclicalEncoder, FrequencyEncoder, GroupLagFeatures
-from tostao_ml.framework.models import QuantileGBRModel
+from tostao_ml.framework.models import (
+    AveragingEnsemble,
+    GBRRegressionModel,
+    QuantileGBRModel,
+    RidgeRegressionModel,
+)
 from tostao_ml.framework.narrate import Insight, Narrative, Severity, rules
 from tostao_ml.framework.optimization import NewsvendorPolicy, expected_cost
 from tostao_ml.framework.tuning import TuningResult, tune_model
@@ -54,6 +64,7 @@ class CaseAResult:
     model: object = None
     feature_names: list[str] = field(default_factory=list)
     tuning: TuningResult | None = None
+    comparison: pd.DataFrame | None = None
 
 
 def build_features_a(weekly: pd.DataFrame) -> pd.DataFrame:
@@ -140,7 +151,9 @@ def run_case_a(
     }
 
     orders, cost_model, cost_naive = _optimize_orders(test, q_pred, quantiles)
+    comparison = _compare_a(train, test, model, hp, seed)
     narrative = _narrate(result_metrics, cost_model, cost_naive, quantiles)
+    narrative.add(narrate_comparison(comparison, "Cuantílico (mediana)"))
     if tuning is not None:
         narrative.extend(tuning.narrative)
     return CaseAResult(
@@ -153,7 +166,31 @@ def run_case_a(
         model=model,
         feature_names=list(FEATURES),
         tuning=tuning,
+        comparison=comparison,
     )
+
+
+def _compare_a(
+    train: pd.DataFrame, test: pd.DataFrame, quantile_model: QuantileGBRModel, hp: dict, seed: int
+) -> pd.DataFrame:
+    """Valida varios modelos para el pronóstico puntual y prueba un ensemble."""
+    gbr_hp = {k: hp[k] for k in ("learning_rate", "max_depth", "max_iter")}
+    models = {
+        "Ridge (lineal)": RidgeRegressionModel(random_state=seed),
+        "GBR": GBRRegressionModel(random_state=seed, **gbr_hp),
+        "Cuantílico (mediana)": quantile_model,
+        "Ensemble (Ridge+GBR)": AveragingEnsemble(
+            [
+                ("ridge", RidgeRegressionModel(random_state=seed)),
+                ("gbr", GBRRegressionModel(random_state=seed, **gbr_hp)),
+            ]
+        ),
+    }
+    # Ridge no tolera NaN de los rezagos iniciales (el boosting sí); se imputa a 0
+    # ("sin historia previa") para una comparación justa entre modelos.
+    x_train = train[FEATURES].fillna(0.0)
+    x_test = test[FEATURES].fillna(0.0)
+    return compare_models(models, x_train, train[TARGET], x_test, test[TARGET], sort_by="wape")
 
 
 def _optimize_orders(

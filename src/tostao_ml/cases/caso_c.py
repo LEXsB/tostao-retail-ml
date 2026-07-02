@@ -13,9 +13,19 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from tostao_ml.framework.evaluation import kfold_splitter, metrics
+from tostao_ml.framework.evaluation import (
+    compare_models,
+    kfold_splitter,
+    metrics,
+    narrate_comparison,
+)
 from tostao_ml.framework.features import RFMTransformer, Winsorizer
-from tostao_ml.framework.models import GBRRegressionModel, GLMModel
+from tostao_ml.framework.models import (
+    AveragingEnsemble,
+    GBRRegressionModel,
+    GLMModel,
+    RidgeRegressionModel,
+)
 from tostao_ml.framework.narrate import Insight, Narrative, Severity, rules
 from tostao_ml.framework.tuning import TuningResult, tune_model
 
@@ -51,6 +61,7 @@ class CaseCResult:
     predictive_model: object = None
     predictive_features: pd.DataFrame | None = None
     tuning: TuningResult | None = None
+    comparison: pd.DataFrame | None = None
 
 
 def _design_matrix(df: pd.DataFrame, num: list[str], cat: list[str]) -> pd.DataFrame:
@@ -95,7 +106,13 @@ def inferential_drivers(master_c: pd.DataFrame) -> tuple[pd.DataFrame, dict[str,
 def predictive_spend(
     master_c: pd.DataFrame, *, seed: int = 42, tune: bool = False, n_trials: int = 20
 ) -> tuple[
-    dict[str, float], pd.DataFrame, GBRRegressionModel, pd.DataFrame, TuningResult | None, Narrative
+    dict[str, float],
+    pd.DataFrame,
+    GBRRegressionModel,
+    pd.DataFrame,
+    TuningResult | None,
+    pd.DataFrame,
+    Narrative,
 ]:
     """Modelo predictivo del gasto esperado del cliente recurrente (features RFM + loyalty).
 
@@ -147,6 +164,21 @@ def predictive_spend(
     pred = model.predict(feat[~mask])
     test = data[~mask].assign(pred=pred)
 
+    # Validación de varios modelos + ensemble para el predictivo de gasto.
+    candidates = {
+        "Ridge (lineal)": RidgeRegressionModel(random_state=seed),
+        "GBR": model,
+        "Ensemble (Ridge+GBR)": AveragingEnsemble(
+            [
+                ("ridge", RidgeRegressionModel(random_state=seed)),
+                ("gbr", GBRRegressionModel(random_state=seed, **hp)),  # type: ignore[arg-type]
+            ]
+        ),
+    }
+    comparison = compare_models(
+        candidates, feat[mask], y[mask], feat[~mask], y[~mask], sort_by="wape"
+    )
+
     report = metrics.regression_report(y[~mask], pred)
     baseline = np.full(len(pred), y[mask].mean())
     report["wape_baseline"] = metrics.wape(y[~mask], baseline)
@@ -169,9 +201,10 @@ def predictive_spend(
             title="Predicción de gasto",
         )
     )
+    narrative.add(narrate_comparison(comparison, "GBR"))
     if tuning is not None:
         narrative.extend(tuning.narrative)
-    return report, test, model, feat[~mask], tuning, narrative
+    return report, test, model, feat[~mask], tuning, comparison, narrative
 
 
 def run_case_c(
@@ -179,8 +212,8 @@ def run_case_c(
 ) -> CaseCResult:
     """Ejecuta el Caso C completo: drivers inferenciales + gasto esperado."""
     coefs, inf_metrics, inf_narr = inferential_drivers(master_c)
-    pred_metrics, pred_test, pred_model, pred_feat, tuning, pred_narr = predictive_spend(
-        master_c, seed=seed, tune=tune, n_trials=n_trials
+    pred_metrics, pred_test, pred_model, pred_feat, tuning, comparison, pred_narr = (
+        predictive_spend(master_c, seed=seed, tune=tune, n_trials=n_trials)
     )
     narrative = Narrative()
     narrative.extend(inf_narr)
@@ -194,4 +227,5 @@ def run_case_c(
         predictive_model=pred_model,
         predictive_features=pred_feat,
         tuning=tuning,
+        comparison=comparison,
     )
