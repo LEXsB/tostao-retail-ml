@@ -135,6 +135,7 @@ markers = [
     "unit: pruebas unitarias rápidas y aisladas",
     "integration: pipelines Kedro end-to-end sobre datos sintéticos",
     "data_contract: validación de esquemas de datos",
+    "calificacion: simula un periodo futuro y califica el modelo (regresión periódica)",
 ]
 
 [tool.coverage.run]

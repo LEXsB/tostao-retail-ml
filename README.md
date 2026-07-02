@@ -89,9 +89,34 @@ uv run uvicorn serving.api.main:app --reload     # http://localhost:8000/docs
 # 7) MLflow UI (tras un kedro run)
 uv run mlflow ui                                  # http://localhost:5000
 
-# 8) Grafo del pipeline
+# 8) Calificar un periodo futuro (simula el mes siguiente y evalúa el modelo)
+uv run pytest -m calificacion -v
+
+# 9) Grafo del pipeline
 uv run kedro viz
 ```
+
+### Cómo se ejecuta y por qué funciona
+
+Al entrar a la carpeta del proyecto, el punto de entrada es **Kedro**: el archivo
+`pyproject.toml` declara `[tool.kedro]` (paquete `tostao_ml`, `src/` como raíz), de
+modo que `uv run kedro run` descubre `src/tostao_ml/pipeline_registry.py` y ejecuta,
+paso a paso, para cada caso:
+
+1. **Ingesta.** El `DataCatalog` (`conf/base/catalog.yml`) carga tipadas las 12
+   fuentes crudas de `data/01_raw` (no hay `pd.read_csv` sueltos).
+2. **Tabla maestra.** El nodo `build_master_*` cruza todas las fuentes del caso en
+   una única tabla (`cases/masters.py`) y valida la cobertura de cada cruce.
+3. **Modelado.** El nodo del caso llama a `cases/caso_*.py`, que reutiliza el
+   framework (features, modelos, HPO, evaluación) y compara varios modelos.
+4. **Salidas.** Métricas, órdenes/combos/coeficientes y el **modelo entrenado**
+   (`data/06_models/*.pkl`) se persisten por el catálogo en las capas `>= 03`.
+
+Los **notebooks** (`notebooks/`) son la vitrina del análisis: importan `tostao_ml`
+y cargan por el catálogo (no reimplementan lógica). Los reportes HTML profundos se
+generan con `scripts/build_reports.py` y viven en `data/08_reporting` (no se
+versionan). Nada está hardcodeado: parámetros, costos y espacios de HPO están en
+`conf/`.
 
 ### Docker
 

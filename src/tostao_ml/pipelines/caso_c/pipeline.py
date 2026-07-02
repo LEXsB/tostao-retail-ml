@@ -25,7 +25,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 node_aov_models,
                 inputs=["master_caso_c", "params:caso_c"],
-                outputs=["c_coefficients", "c_metrics", "c_predictive_test", "c_narrative"],
+                outputs=[
+                    "c_coefficients",
+                    "c_metrics",
+                    "c_predictive_test",
+                    "c_narrative",
+                    "c_modelo",
+                ],
                 name="aov_models_c",
             ),
         ],

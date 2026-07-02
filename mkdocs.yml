@@ -30,6 +30,7 @@ nav:
       - Caso A - Abastecimiento: caso_a.md
       - Caso B - Combos: caso_b.md
       - Caso C - AOV: caso_c.md
+  - Calificacion de periodos futuros: calificacion.md
   - Referencia del framework: referencia.md
 
 markdown_extensions:
