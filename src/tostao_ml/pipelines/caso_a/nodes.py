@@ -22,12 +22,16 @@ def node_build_master_a(
 
 def node_forecast_and_optimize(
     weekly: pd.DataFrame, params: dict
-) -> tuple[dict, pd.DataFrame, pd.DataFrame, list]:
-    """Forecast probabilístico + optimización de pedido (newsvendor)."""
+) -> tuple[dict, pd.DataFrame, pd.DataFrame, list, object]:
+    """Forecast probabilístico + optimización de pedido (newsvendor).
+
+    Devuelve además el modelo entrenado para persistirlo como artefacto y poder
+    calificar periodos futuros sin reentrenar.
+    """
     result = caso_a.run_case_a(
         weekly,
         quantiles=tuple(params.get("quantiles", (0.1, 0.5, 0.9))),
         max_iter=int(params.get("max_iter", 200)),
         seed=int(params.get("random_seed", 42)),
     )
-    return result.metrics, result.orders, result.test, result.narrative.to_dicts()
+    return result.metrics, result.orders, result.test, result.narrative.to_dicts(), result.model

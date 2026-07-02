@@ -6,6 +6,19 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Sin publicar]
 
+### Añadido (calificación de periodos futuros)
+- **Persistencia de artefactos entrenados**: los pipelines de Caso A y C guardan el
+  modelo entrenado en `data/06_models/` (`modelo_caso_a.pkl`, `modelo_caso_c.pkl`)
+  para calificar meses futuros sin reentrenar.
+- **Simulación + calificación** (`cases/simulacion.py`): `simular_demanda` genera la
+  demanda del periodo siguiente por SKU-tienda desde la distribución histórica;
+  `calificar_demanda` reconstruye features, predice y compara (MAE/RMSE/WAPE/R²).
+- **Workflow programado** `calificacion-mensual` (GitHub Actions, cron mensual) que
+  ejecuta la calificación como prueba de regresión; test `-m calificacion`.
+- Documento `docs/calificacion.md` y guía "cómo se ejecuta y por qué funciona" en el
+  README. Se eliminó el generador de notebooks (`scripts/gen_notebooks.py`); los
+  notebooks quedan como vitrina editable a mano.
+
 ### Limpieza y documentación
 - **Sin emojis ni iconos** en ningún archivo (código, plantilla HTML, reportes,
   notebooks, docs, README). Los niveles de severidad se rinden con etiqueta textual

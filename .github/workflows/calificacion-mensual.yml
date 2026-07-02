@@ -1,0 +1,36 @@
+name: Calificacion mensual
+
+# Simula un periodo futuro y califica el modelo de abastecimiento. Corre el primer
+# dia de cada mes (y bajo demanda) como prueba de regresion: si el pipeline o el
+# modelo se degradan frente a datos del periodo siguiente, este job falla.
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: calificacion-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KEDRO_DISABLE_TELEMETRY: "true"
+  UV_LINK_MODE: copy
+
+jobs:
+  calificar:
+    name: Simular periodo futuro y calificar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv (con Python 3.13)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Sincronizar entorno
+        run: uv sync --extra caso_b --extra serving --group dev
+
+      - name: Calificacion del periodo futuro simulado
+        run: uv run pytest -m calificacion -v
