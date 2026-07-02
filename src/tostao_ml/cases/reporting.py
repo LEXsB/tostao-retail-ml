@@ -399,6 +399,16 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
             test.assign(err=(test["unidades_vendidas"] - test["pred"]).abs()), "id_producto", "err"
         ),
     )
+    if result.comparison is not None:
+        perf.add_table(
+            "Comparación de modelos en el holdout (ordenada por WAPE)", result.comparison.round(4)
+        )
+        perf.add_figure(
+            "comparacion",
+            performance.model_comparison_bar(
+                result.comparison["wape"].to_dict(), "WAPE (menor es mejor)"
+            ),
+        )
 
     interp = ReportSection(
         id="a_interpret",
@@ -464,7 +474,16 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
         combos.add_figure("combos_lift", eda_viz.pareto(combo_lift, name="combo (lift)"))
         combos.add_table("Combos por cluster", result.combos)
     if result.k_selection is not None:
-        seg.add_table("Selección de k por silhouette", result.k_selection)
+        seg.add_table("Selección de k por silhouette (K-Means)", result.k_selection)
+    if result.clustering_comparison is not None:
+        seg.add_table(
+            "Comparación de algoritmos de clustering (silhouette)", result.clustering_comparison
+        )
+    if result.graph_centrality is not None:
+        combos.add_table(
+            "Grafo de co-compra — productos «hub» por centralidad (enfoque complementario)",
+            result.graph_centrality,
+        )
     return [strategy_b(result), seg, combos]
 
 
@@ -489,6 +508,17 @@ def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
         "Métricas del modelo predictivo",
         pd.DataFrame([result.predictive_metrics]).T.rename(columns={0: "valor"}).round(4),
     )
+    if result.comparison is not None:
+        pred.add_table(
+            "Comparación de modelos predictivos en el holdout (ordenada por WAPE)",
+            result.comparison.round(4),
+        )
+        pred.add_figure(
+            "comparacion",
+            performance.model_comparison_bar(
+                result.comparison["wape"].to_dict(), "WAPE (menor es mejor)"
+            ),
+        )
     pred.add_figure("pred_vs_real", performance.pred_vs_actual(test["ticket_medio"], test["pred"]))
     pred.add_figure("residuales", performance.residuals_vs_pred(test["ticket_medio"], test["pred"]))
     if result.predictive_model is not None and result.predictive_features is not None:
