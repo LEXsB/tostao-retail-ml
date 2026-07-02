@@ -41,13 +41,20 @@ stages:
       - data/07_model_output/c_metrics.json:
           cache: false
 
-  reporte_unificado:
-    cmd: python scripts/build_unified_report.py
+  reportes:
+    cmd: python scripts/build_reports.py
     deps:
       - src/tostao_ml/cases/reporting.py
+      - src/tostao_ml/cases/storytelling.py
       - data/03_primary/master_caso_a_semanal.parquet
       - data/03_primary/master_caso_b.parquet
       - data/03_primary/master_caso_c.parquet
     outs:
       - data/08_reporting/reporte_unificado.html:
+          cache: false
+      - data/08_reporting/reporte_caso_a.html:
+          cache: false
+      - data/08_reporting/reporte_caso_b.html:
+          cache: false
+      - data/08_reporting/reporte_caso_c.html:
           cache: false

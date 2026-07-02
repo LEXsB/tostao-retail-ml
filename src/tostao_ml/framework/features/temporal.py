@@ -22,10 +22,12 @@ class DateTimeFeatures(PandasTransformer):
     """
 
     def __init__(self, column: str, drop_original: bool = True) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.column = column
         self.drop_original = drop_original
 
     def fit(self, X: pd.DataFrame, y: object = None) -> DateTimeFeatures:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         base = [c for c in X.columns if c != self.column] if self.drop_original else list(X.columns)
         self.feature_names_out_ = [
@@ -41,6 +43,7 @@ class DateTimeFeatures(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         dt = pd.to_datetime(X[self.column])
         X[f"{self.column}_year"] = dt.dt.year
@@ -70,11 +73,13 @@ class CyclicalEncoder(PandasTransformer):
     def __init__(
         self, columns: list[str], periods: dict[str, int], drop_original: bool = True
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.columns = columns
         self.periods = periods
         self.drop_original = drop_original
 
     def fit(self, X: pd.DataFrame, y: object = None) -> CyclicalEncoder:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         kept = [c for c in X.columns if not (self.drop_original and c in self.columns)]
         generated = [f"{c}_{fn}" for c in self.columns for fn in ("sin", "cos")]
@@ -82,6 +87,7 @@ class CyclicalEncoder(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         for col in self.columns:
             period = self.periods[col]
@@ -115,6 +121,7 @@ class GroupLagFeatures(PandasTransformer):
         lags: tuple[int, ...] = (1, 2, 4),
         rolling_windows: tuple[int, ...] = (4,),
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self.group_cols = group_cols
         self.time_col = time_col
         self.target = target
@@ -122,6 +129,7 @@ class GroupLagFeatures(PandasTransformer):
         self.rolling_windows = rolling_windows
 
     def fit(self, X: pd.DataFrame, y: object = None) -> GroupLagFeatures:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         X = self._check_dataframe(X)
         generated = [f"{self.target}_lag_{k}" for k in self.lags]
         for w in self.rolling_windows:
@@ -130,6 +138,7 @@ class GroupLagFeatures(PandasTransformer):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Aplica la transformacion y devuelve un DataFrame."""
         X = self._check_dataframe(X).copy()
         X = X.sort_values([*self.group_cols, self.time_col])
         grouped = X.groupby(self.group_cols, observed=True)[self.target]

@@ -39,6 +39,10 @@
                  border-left:4px solid var(--muted)}
     .insights li.good{border-color:var(--good)} .insights li.info{border-color:var(--info)}
     .insights li.warning{border-color:var(--warn)} .insights li.critical{border-color:var(--crit)}
+    .sev{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+         padding:.08rem .4rem;border-radius:4px;margin-right:.4rem;color:#fff;background:var(--muted);vertical-align:.06em}
+    .insights li.good .sev{background:var(--good)} .insights li.info .sev{background:var(--info)}
+    .insights li.warning .sev{background:var(--warn)} .insights li.critical .sev{background:var(--crit)}
     .figure{margin:1rem 0;border:1px solid var(--line);border-radius:10px;padding:.4rem;overflow:hidden}
     /* Tablas: contenedor con scroll para que NUNCA se salgan del formato. */
     .table-wrap{overflow-x:auto;max-width:100%;max-height:460px;overflow-y:auto;border:1px solid var(--line);
@@ -82,7 +86,7 @@
         {% if s.insights %}
         <ul class="insights">
           {% for ins in s.insights %}
-          <li class="{{ ins.severity }}">{{ ins.emoji }} {% if ins.title %}<strong>{{ ins.title }}</strong> — {% endif %}{{ ins.text }}</li>
+          <li class="{{ ins.severity }}"><span class="sev">{{ ins.etiqueta }}</span> {% if ins.title %}<strong>{{ ins.title }}</strong> — {% endif %}{{ ins.text }}</li>
           {% endfor %}
         </ul>
         {% endif %}

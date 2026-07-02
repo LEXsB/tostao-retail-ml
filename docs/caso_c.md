@@ -1,0 +1,62 @@
+# Caso C — Modelado del Ticket Promedio (AOV)
+
+## Problema de negocio
+
+Existe alta variabilidad en el ticket promedio (AOV) entre sucursales. Se necesita
+(1) entender qué factores exógenos y endógenos lo influyen (modelo **inferencial**)
+y (2) estimar el **gasto esperado** de un cliente recurrente en su próxima visita
+(modelo **predictivo**), con interpretabilidad y manejo de outliers.
+
+## Datos y tabla maestra
+
+Se cruzan las cuatro fuentes de `03_aov_drivers`:
+
+```
+transacciones_resumen  x  clientes_loyalty     (id_cliente)
+                       x  variables_exogenas   (fecha + tienda)
+                       x  intensidad de promociones_activas (fecha + tienda)
+```
+
+El resultado es una fila por ticket enriquecida con perfil del cliente (edad,
+segmento, antigüedad), condiciones exógenas (clima, tráfico, índice de competencia)
+y el número de promociones activas.
+
+Código: `cases/masters.py::build_master_c`.
+
+## Modelos y validación
+
+1. **Inferencial — GLM gaussiano.** Coeficientes con error estándar, p-valor e
+   intervalo de confianza; outliers **winsorizados** antes de ajustar. Responde qué
+   drivers mueven el ticket y en qué dirección, con significancia estadística.
+2. **Predictivo — gasto del cliente recurrente.** Features RFM + loyalty por cliente
+   (recencia, frecuencia, edad, antigüedad, segmento). Se **comparan Ridge / GBR /
+   ensemble** en un holdout **80/20** (`compare_models`) y se optimiza con **Optuna
+   (K-Fold)**. En estos datos Ridge resulta el mejor.
+
+El GLM se ajusta sobre todo el conjunto (su fin es inferencial, no predecir); el
+modelo de gasto usa el holdout para medir generalización frente al baseline de la
+media.
+
+## Métricas (lectura, no definición)
+
+- **GLM:** `total_articulos` es el driver dominante y altamente significativo
+  (β~8, p<0.001; el IC no cruza cero); el clima lluvioso reduce el ticket de forma
+  significativa aunque con efecto pequeño; el resto no es significativo.
+- **Predictivo:** R² ~0.81 (ajuste fuerte) y mejora el baseline de la media en WAPE,
+  confirmando que el perfil RFM+loyalty predice el gasto; el MAE es bajo frente al
+  ticket medio.
+
+## Decisión de negocio
+
+Los drivers significativos orientan acciones (p. ej. mitigar el efecto del clima);
+el modelo de gasto prioriza clientes por valor esperado para campañas.
+
+## Cómo ejecutarlo
+
+```bash
+uv run kedro run --pipeline caso_c
+# o:  from tostao_ml.cases.caso_c import run_case_c
+```
+
+Archivos clave: `cases/caso_c.py` (GLM inferencial + predictivo + comparación),
+`pipelines/caso_c/`, `models/linear.py` (GLM), `interpret/` (SHAP).

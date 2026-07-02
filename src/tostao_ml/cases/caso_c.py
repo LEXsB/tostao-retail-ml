@@ -20,6 +20,7 @@ from tostao_ml.framework.evaluation import (
     narrate_comparison,
 )
 from tostao_ml.framework.features import RFMTransformer, Winsorizer
+from tostao_ml.framework.io import set_global_seed
 from tostao_ml.framework.models import (
     AveragingEnsemble,
     GBRRegressionModel,
@@ -211,6 +212,7 @@ def run_case_c(
     master_c: pd.DataFrame, *, seed: int = 42, tune: bool = False, n_trials: int = 20
 ) -> CaseCResult:
     """Ejecuta el Caso C completo: drivers inferenciales + gasto esperado."""
+    set_global_seed(seed)
     coefs, inf_metrics, inf_narr = inferential_drivers(master_c)
     pred_metrics, pred_test, pred_model, pred_feat, tuning, comparison, pred_narr = (
         predictive_spend(master_c, seed=seed, tune=tune, n_trials=n_trials)

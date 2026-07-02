@@ -25,6 +25,7 @@ class RidgeRegressionModel(BaseModel):
     task = TaskType.REGRESSION
 
     def __init__(self, alpha: float = 1.0, random_state: int = 42, **kwargs: object) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="ridge")
         self.alpha = alpha
         self.random_state = random_state
@@ -32,12 +33,14 @@ class RidgeRegressionModel(BaseModel):
         self.metadata.params = {"alpha": alpha, "random_state": random_state, **kwargs}
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> RidgeRegressionModel:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         self._estimator.fit(X, y)
         self.metadata.feature_names = list(X.columns)
         self.is_fitted_ = True
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         return np.asarray(self._estimator.predict(X))
 
@@ -57,6 +60,7 @@ class GBRRegressionModel(BaseModel):
         random_state: int = 42,
         **kwargs: object,
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="gbr")
         self._estimator = HistGradientBoostingRegressor(
             learning_rate=learning_rate,
@@ -76,12 +80,14 @@ class GBRRegressionModel(BaseModel):
         }
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> GBRRegressionModel:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         self._estimator.fit(X, y)
         self.metadata.feature_names = list(X.columns)
         self.is_fitted_ = True
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         return np.asarray(self._estimator.predict(X))
 
@@ -110,6 +116,7 @@ class QuantileGBRModel(BaseModel):
         random_state: int = 42,
         **kwargs: object,
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="quantile_gbr")
         self.quantiles = tuple(sorted(quantiles))
         self.learning_rate = learning_rate
@@ -127,6 +134,7 @@ class QuantileGBRModel(BaseModel):
         }
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> QuantileGBRModel:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         for q in self.quantiles:
             est = HistGradientBoostingRegressor(
                 loss="quantile",
@@ -144,6 +152,7 @@ class QuantileGBRModel(BaseModel):
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         median_q = min(self.quantiles, key=lambda q: abs(q - 0.5))
         preds = np.asarray(self._estimators[median_q].predict(X))
@@ -158,6 +167,7 @@ class QuantileGBRModel(BaseModel):
         return pd.DataFrame(out, index=X.index)
 
     def predict_interval(self, X: pd.DataFrame, coverage: float = 0.8) -> dict[str, np.ndarray]:
+        """Devuelve el intervalo de prediccion para las observaciones."""
         self._check_fitted()
         lower_q = min(self.quantiles)
         upper_q = max(self.quantiles)

@@ -33,6 +33,7 @@ class KMeansModel(BaseModel):
     def __init__(
         self, n_clusters: int = 4, random_state: int = 42, n_init: int = 10, **kwargs: object
     ) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         super().__init__(name="kmeans")
         self.n_clusters = n_clusters
         self._estimator = KMeans(
@@ -45,6 +46,7 @@ class KMeansModel(BaseModel):
         }
 
     def fit(self, X: pd.DataFrame, y: pd.Series | np.ndarray | None = None) -> KMeansModel:
+        """Ajusta el estimador con los datos y devuelve la propia instancia."""
         labels = self._estimator.fit_predict(X)
         self.metadata.feature_names = list(X.columns)
         self.metadata.extra["inertia"] = float(self._estimator.inertia_)
@@ -54,6 +56,7 @@ class KMeansModel(BaseModel):
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Devuelve las predicciones para las observaciones de entrada."""
         self._check_fitted()
         return np.asarray(self._estimator.predict(X))
 

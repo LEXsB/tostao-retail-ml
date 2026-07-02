@@ -21,13 +21,13 @@ class Severity(StrEnum):
     CRITICAL = "critical"
 
     @property
-    def emoji(self) -> str:
-        """Emoji representativo para render en texto/HTML."""
+    def etiqueta(self) -> str:
+        """Etiqueta textual del nivel (sin iconos), para render en texto/HTML."""
         return {
-            Severity.GOOD: "✅",
-            Severity.INFO: "ℹ️",
-            Severity.WARNING: "⚠️",
-            Severity.CRITICAL: "🔴",
+            Severity.GOOD: "OK",
+            Severity.INFO: "Nota",
+            Severity.WARNING: "Aviso",
+            Severity.CRITICAL: "Alerta",
         }[self]
 
     @property
@@ -60,15 +60,16 @@ class Insight:
     title: str | None = None
 
     def to_markdown(self) -> str:
-        """Renderiza la conclusión como una línea Markdown."""
+        """Renderiza la conclusión como una línea Markdown (sin iconos)."""
         prefix = f"**{self.title}** — " if self.title else ""
-        return f"{self.severity.emoji} {prefix}{self.text}"
+        return f"[{self.severity.etiqueta}] {prefix}{self.text}"
 
 
 class Narrative:
     """Colección ordenada de :class:`Insight` de una sección del análisis."""
 
     def __init__(self, insights: Iterable[Insight] | None = None) -> None:
+        """Inicializa la instancia con sus parametros de configuracion."""
         self._insights: list[Insight] = list(insights) if insights else []
 
     def add(self, insight: Insight | None) -> Narrative:
@@ -103,7 +104,7 @@ class Narrative:
             {
                 "text": i.text,
                 "severity": i.severity.value,
-                "emoji": i.severity.emoji,
+                "etiqueta": i.severity.etiqueta,
                 "title": i.title,
                 "metrics": dict(i.metrics),
                 "tags": list(i.tags),
@@ -112,10 +113,13 @@ class Narrative:
         ]
 
     def __len__(self) -> int:
+        """Numero de elementos de la coleccion."""
         return len(self._insights)
 
     def __iter__(self) -> Iterator[Insight]:
+        """Itera sobre los elementos de la coleccion."""
         return iter(self._insights)
 
     def __repr__(self) -> str:
+        """Representacion legible para depuracion."""
         return f"Narrative(n={len(self._insights)}, worst={self.worst_severity.value})"
