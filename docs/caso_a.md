@@ -93,7 +93,8 @@ requiere extras adicionales.
   agnóstico al caso: no conoce a Tostao.
 - **Reportes y notebooks.** El completo lo arma `cases/reporting.py` +
   `storytelling.py`; el ejecutivo, `cases/executive.py::executive_a`. En paralelo,
-  `notebooks/caso_a/` contiene el EDA y el análisis de modelos.
+  `notebooks/caso_a/` contiene el EDA (`01_eda`) y el modelamiento desplegado
+  (`02_modelamiento`).
 
 **Relación con los otros casos.** Los tres comparten el mismo `framework/` y el mismo
 patrón master → modelo → reporte; solo cambian la tabla maestra y el nodo de modelo.
