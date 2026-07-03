@@ -228,6 +228,33 @@ docker compose -f deployment/docker-compose.yml up --build
 - **Observabilidad:** Prometheus + Grafana; detección de drift (PSI/KS) para cerrar
   el ciclo monitoreo -> detección -> reentrenamiento.
 
+## Calidad: lint, tipos y pruebas
+
+Las comprobaciones se ejecutan con `uv` y son **las mismas en local y en CI**:
+
+```bash
+uv run ruff check src tests           # lint (estilo, imports, bugs comunes)
+uv run ruff format --check src tests   # formato (ruff; línea de 100)
+uv run mypy src                        # tipos estáticos
+uv run pytest                          # pruebas + cobertura (resumen en consola)
+```
+
+- **Lint y formato — `ruff`.** Reglas y estilo en `pyproject.toml` (`[tool.ruff]`).
+  `ruff format` es el único formateador del proyecto.
+- **Tipos — `mypy`** sobre `src/`.
+- **Pruebas — `pytest`** (con `pytest-cov`) en `tests/`, organizadas por marcadores:
+  `unit`, `integration`, `data_contract` y `calificacion`. Ejemplos:
+  `uv run pytest -m unit` o `uv run pytest -m calificacion`.
+- **`pre-commit`.** Los mismos hooks corren en cada commit; se activan una vez con
+  `uv run pre-commit install`.
+
+**Quién lo administra.** La CI de **GitHub Actions** (`.github/workflows/ci.yml`)
+ejecuta lint + formato + tipos + pruebas + humo de Kedro en cada `push` y `pull
+request` a `main` y `develop`; **ningún cambio se fusiona sin la CI en verde**. Un
+workflow programado (`.github/workflows/calificacion-mensual.yml`) corre cada mes la
+calificación de un periodo futuro. La aprobación de los PR la realiza el
+administrador del repositorio (ver [Flujo de trabajo](#flujo-de-trabajo-ramas-pr-y-cicd)).
+
 ## Flujo de trabajo (ramas, PR y CI/CD)
 
 El proyecto trabaja con dos ramas de larga vida —**`main`** (producción, siempre
