@@ -1,5 +1,22 @@
 # Caso A — Optimización de Abastecimiento
 
+## Glosario del caso
+
+- **Forecast probabilístico** — pronóstico que estima no solo el valor esperado sino
+  la incertidumbre (mediante cuantiles).
+- **Cuantiles / pérdida pinball** — el modelo predice percentiles (p10/p50/p90)
+  minimizando la pérdida *pinball*; de ahí salen los intervalos de predicción.
+- **Newsvendor / *critical fractile*** — modelo de inventario que fija la cantidad de
+  pedido óptima balanceando el costo de faltante vs. sobrante; el fractil crítico
+  `Cu/(Cu+Co)` es el percentil objetivo del pedido.
+- **Holdout temporal / walk-forward** — validación que respeta el tiempo: se entrena
+  con el pasado y se evalúa con el futuro (sin fuga de información).
+- **WAPE** — error porcentual absoluto ponderado (robusto para demanda).
+- **R²** — proporción de la varianza explicada por el modelo.
+- **PICP / MPIW** — cobertura de los intervalos (% de valores reales dentro) y su
+  anchura media.
+- **HPO (Optuna)** — optimización de hiperparámetros.
+
 ## Problema de negocio
 
 Predecir la demanda es solo la mitad de la batalla: si se pide de menos se pierden
