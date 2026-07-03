@@ -1,13 +1,13 @@
 # tostao-retail-ml
 
-Construí una **plataforma de ciencia de datos y machine learning de grado
-producción** para una cadena de retail. No es un notebook de prueba: es un
-producto de software modular, reutilizable, testeado y desplegable, siguiendo
-prácticas de MLOps, DevOps y AIOps.
+Este repositorio implementa una **plataforma de ciencia de datos y machine learning
+de grado producción** para una cadena de retail. No se trata de un notebook de
+prueba, sino de un producto de software modular, reutilizable, probado y desplegable,
+desarrollado bajo prácticas de MLOps, DevOps y AIOps.
 
-Diseñé primero un **framework reutilizable** y luego resolví tres casos de negocio
-reutilizándolo, de modo que cada caso añade el mínimo código posible. Todo el
-pipeline se orquesta con Kedro y cada nodo emite, además de sus artefactos, una
+La estrategia parte de un **framework reutilizable** sobre el que se resuelven los
+tres casos de negocio, de manera que cada caso añade el mínimo código posible. Todo
+el flujo se orquesta con Kedro y cada nodo emite, junto a sus artefactos, una
 **mini-conclusión analítica** derivada de sus propias salidas.
 
 | Caso | Problema | Enfoque | Resultado (datos reales) |
@@ -19,26 +19,26 @@ pipeline se orquesta con Kedro y cada nodo emite, además de sus artefactos, una
 Explicación detallada de cómo funciona cada caso: [Caso A](docs/caso_a.md) ·
 [Caso B](docs/caso_b.md) · [Caso C](docs/caso_c.md).
 
-## Por qué lo construí así (decisiones de diseño)
+## Por qué lo construimos así (decisiones de diseño)
 
-- **Framework antes que casos.** Escribí un núcleo agnóstico (EDA, features,
-  modelos, HPO, evaluación, interpretabilidad, optimización, narración, reporte)
-  porque los tres casos comparten el 90 % de la mecánica. Cada caso nuevo redujo
-  el código respecto al anterior: solo aporta su tabla maestra y su nodo de modelo.
-- **Una tabla maestra por caso.** En lugar de analizar fuente por fuente, crucé
-  todas las fuentes de cada caso en una única tabla maestra y sobre ella hice EDA,
-  modelado y estadística. Cada cruce reporta su cobertura (integridad referencial),
-  de modo que el pipeline falla temprano si se rompe una FK.
-- **Validación de varios modelos por caso.** No me quedé con un solo modelo: comparo
-  candidatos en el holdout y, donde aporta, los combino en un ensemble. El hallazgo
-  honesto en estos datos es que, tras el feature engineering, el modelo lineal (Ridge)
-  supera al boosting en las dos tareas de regresión.
+- **Framework antes que casos.** El núcleo (EDA, features, modelos, HPO, evaluación,
+  interpretabilidad, optimización, narración, reporte) es agnóstico al caso, porque
+  los tres comparten el 90 % de la mecánica. Gracias a ello, cada caso nuevo reduce el
+  código respecto al anterior: solo aporta su tabla maestra y su nodo de modelo.
+- **Una tabla maestra por caso.** En lugar de analizar fuente por fuente, cruzamos
+  todas las fuentes de cada caso en una única tabla maestra y sobre ella hacemos el
+  EDA, el modelado y la estadística. Cada cruce reporta su cobertura (integridad
+  referencial), de modo que el pipeline falla temprano si se rompe una relación.
+- **Validación de varios modelos por caso.** No nos quedamos con un solo modelo:
+  comparamos candidatos en el holdout y, donde aporta, los combinamos en un ensemble.
+  El hallazgo honesto en estos datos es que, tras el feature engineering, el modelo
+  lineal (Ridge) supera al boosting en las dos tareas de regresión.
 - **Forecast probabilístico en el Caso A.** La decisión de pedido depende de la
-  incertidumbre, no solo del valor esperado; por eso modelé cuantiles y resolví el
-  pedido con el *critical fractile* (newsvendor).
-- **Configuración sobre código.** Semillas, umbrales, costos y espacios de HPO
-  viven en YAML versionados; nada hardcodeado.
-- **Reproducibilidad total.** Fijé el entorno con `uv` + lockfile (Python 3.13) y
+  incertidumbre y no solo del valor esperado; por eso modelamos cuantiles y resolvemos
+  el pedido con el *critical fractile* (newsvendor).
+- **Configuración sobre código.** Semillas, umbrales, costos y espacios de HPO viven
+  en YAML versionados; nada queda escrito a mano en el código.
+- **Reproducibilidad total.** El entorno se fija con `uv` + lockfile (Python 3.13) y
   semillas globales deterministas.
 
 ## Arquitectura
