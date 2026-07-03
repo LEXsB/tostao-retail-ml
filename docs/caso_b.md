@@ -1,5 +1,20 @@
 # Caso B — Creación de Combos
 
+## Glosario del caso
+
+- **Clustering (K-Means, Aglomerativo)** — agrupa tiendas por su perfil de compra sin
+  etiqueta previa (aprendizaje no supervisado).
+- **Silhouette** — métrica de calidad del clustering (−1 a 1): cohesión dentro del
+  grupo vs. separación entre grupos.
+- **Reglas de asociación (FP-Growth)** — patrones de co-compra «si lleva A, también
+  lleva B» extraídos de las cestas.
+- **Support / Confidence / Lift / Conviction** — métricas de una regla: frecuencia
+  conjunta / probabilidad condicional / cuántas veces más de lo esperado por azar /
+  fuerza de la implicación.
+- **Grafo de co-compra / centralidad** — red donde los productos son nodos y las
+  co-compras aristas; la centralidad identifica los productos «hub» que conectan la
+  red.
+
 ## Problema de negocio
 
 Se busca incrementar el ticket promedio mediante venta cruzada, identificando

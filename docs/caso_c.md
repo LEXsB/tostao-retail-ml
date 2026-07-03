@@ -1,5 +1,19 @@
 # Caso C — Modelado del Ticket Promedio (AOV)
 
+## Glosario del caso
+
+- **AOV** — *Average Order Value*, el ticket promedio.
+- **GLM (inferencial)** — modelo lineal generalizado que estima el efecto de cada
+  *driver* sobre el ticket, con significancia estadística.
+- **Coeficiente β / p-valor / IC95%** — magnitud del efecto / probabilidad de que sea
+  azar (significativo si p<0.05) / intervalo de confianza (si no cruza cero, el efecto
+  es real).
+- **Winsorización** — recorte de los valores extremos (*outliers*) antes de ajustar.
+- **RFM** — *Recency, Frequency, Monetary*: features del comportamiento del cliente.
+- **Holdout 80/20** — 80 % de los datos para entrenar y 20 % para evaluar.
+- **SHAP** — contribución de cada feature a la predicción del gasto.
+- **WAPE / MAE / R²** — métricas de error y de ajuste del modelo predictivo.
+
 ## Problema de negocio
 
 Existe alta variabilidad en el ticket promedio (AOV) entre sucursales. Se necesita
