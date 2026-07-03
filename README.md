@@ -221,12 +221,36 @@ docker compose -f deployment/docker-compose.yml up --build
 
 - **Tracking/registry:** MLflow vía `kedro-mlflow`; **versionado** con DVC
   (`dvc.yaml`) y el catálogo de Kedro. Model/Data cards en `reports/`.
-- **CI/CD:** GitHub Actions (ruff, black, mypy, pytest con cobertura, humo de
-  Kedro) en cada push/PR; `pre-commit` con los mismos hooks.
+- **CI/CD:** GitHub Actions (ruff check + ruff format, mypy, pytest con cobertura)
+  en cada push/PR; `pre-commit` con los mismos hooks.
 - **Contenerización:** imágenes multi-stage con `uv` y usuario no root.
 - **Serving:** FastAPI con validación Pydantic, health/readiness y `/metrics`.
 - **Observabilidad:** Prometheus + Grafana; detección de drift (PSI/KS) para cerrar
   el ciclo monitoreo -> detección -> reentrenamiento.
+
+## Flujo de trabajo (ramas, PR y CI/CD)
+
+El proyecto trabaja con dos ramas de larga vida —**`main`** (producción, siempre
+desplegable) y **`develop`** (integración)— y ramas de trabajo por cada cambio:
+
+1. **Una rama por feature o solicitud del backlog.** Cada funcionalidad, corrección
+   o solicitud se desarrolla en su propia rama (`feature/…`, `fix/…`), nombrada según
+   el ítem que resuelve.
+2. **Pull Request a `develop`.** Al terminar, se abre un PR de la rama hacia
+   `develop`. La CI (ruff check + ruff format, mypy, pytest con cobertura) debe pasar
+   y **un administrador** revisa y **acepta** el PR antes de fusionar.
+3. **Pull Request de `develop` a `main`.** En cada hito se abre un PR de `develop`
+   hacia `main`, también revisado y **aceptado por un administrador**.
+
+Cada fusión conserva el historial (merge commits `--no-ff`, sin *squash*), de modo
+que se mantiene la trazabilidad de cada cambio. El repositorio incluye `CODEOWNERS`
+y una plantilla de PR (`.github/PULL_REQUEST_TEMPLATE.md`) para estandarizar la
+revisión.
+
+> **Nota.** En esta entrega, al ser un proyecto individual, el mismo desarrollador
+> crea las ramas, abre los PR y los acepta. El flujo correcto —y para el que el
+> repositorio está preparado— es que la aprobación a `develop` y a `main` la realice
+> un administrador distinto (con protección de ramas que exija la revisión).
 
 ## Resultados y limitaciones
 
