@@ -55,11 +55,43 @@ src/tostao_ml/
   pipelines/              # pipelines Kedro que orquestan el framework por caso
 serving/api/              # API FastAPI de inferencia (endpoints por caso)
 deployment/               # docker-compose + monitoreo (Prometheus/Grafana)
-notebooks/                # vitrina del análisis (importan src/, cargan por catálogo)
+notebooks/                # guía de análisis en paralelo (EDA + modelos por caso)
 tests/                    # unit + integration + data_contracts
-reports/                  # model card, data card
+reports/                  # model card, data card, y reports/ejecutivo (HTML por caso)
 docs/                     # MkDocs (mkdocstrings) + un documento por caso
 ```
+
+## Requisitos mínimos y entorno
+
+| Requisito | Detalle |
+|-----------|---------|
+| **SO** | Linux, macOS o Windows 10/11 (probado en Windows 10 y en Ubuntu por CI). |
+| **Python** | 3.13 (`>=3.13,<3.14`). No hace falta instalarlo: `uv` lo descarga y fija. |
+| **Gestor de entorno** | [`uv`](https://docs.astral.sh/uv/) ≥ 0.11 (resuelve, instala y bloquea el entorno). |
+| **Git** | Cualquier versión reciente. |
+| **RAM** | 4 GB bastan; el dato es pequeño (miles de filas por caso). |
+| **Disco** | ~2 GB para el entorno virtual (`.venv`) y las dependencias. |
+| **Opcional** | Docker + Docker Compose para el stack de serving/observabilidad. |
+
+**El stack (dependencias principales y su rol).** Las versiones exactas quedan
+fijadas en `uv.lock`; estas son las cotas declaradas en `pyproject.toml`:
+
+| Paquete | Versión | Para qué |
+|---------|---------|----------|
+| `kedro` | ≥ 0.19 | Orquestación: catálogo de datos, nodos y pipelines. |
+| `kedro-datasets` / `kedro-viz` / `kedro-mlflow` | ≥ 4.0 / ≥ 10.0 / ≥ 0.13 | Datasets del catálogo, grafo del pipeline y tracking MLflow. |
+| `pandas` / `polars` / `pyarrow` / `numpy` | ≥ 2.2 / ≥ 1.0 / ≥ 16.0 / ≥ 1.26 | Manipulación de datos y Parquet. |
+| `scikit-learn` / `statsmodels` / `scipy` | ≥ 1.5 / ≥ 0.14 / ≥ 1.13 | Modelos, GLM inferencial y estadística. |
+| `optuna` | ≥ 4.0 | Optimización de hiperparámetros (TPE). |
+| `shap` | ≥ 0.46 | Interpretabilidad de modelos. |
+| `pandera` | ≥ 0.20 | Validación de esquemas (contratos de datos). |
+| `plotly` / `jinja2` | ≥ 5.22 / ≥ 3.1 | Figuras y ensamblado de reportes HTML. |
+| `mlflow` | ≥ 2.14 | Registro de experimentos y modelos. |
+| `mlxtend` / `networkx` *(extra `caso_b`)* | ≥ 0.23 / ≥ 3.3 | Reglas de asociación y grafo de co-compra. |
+| `fastapi` / `uvicorn` *(extra `serving`)* | ≥ 0.111 / ≥ 0.30 | API de inferencia. |
+
+Herramientas de desarrollo (grupo `dev`): `pytest`+`pytest-cov`, `ruff`, `black`,
+`mypy`, `pre-commit`, `mkdocs`+`mkdocs-material`, `jupyter`.
 
 ## Puesta en marcha (reproducible)
 
@@ -80,8 +112,8 @@ uv run pytest
 # 4) Ejecutar los pipelines (los tres casos)
 uv run kedro run                      # o: --pipeline caso_a | caso_b | caso_c
 
-# 5) Tablas maestras + reportes HTML (por caso y unificado)
-uv run python scripts/build_reports.py   # -> data/08_reporting/reporte_*.html
+# 5) Tablas maestras + reportes HTML (completo y ejecutivo por caso)
+uv run python scripts/build_reports.py   # ejecutivo -> reports/ejecutivo/  ·  completo -> data/08_reporting/
 
 # 6) API de inferencia
 uv run uvicorn serving.api.main:app --reload     # http://localhost:8000/docs
@@ -96,15 +128,26 @@ uv run pytest -m calificacion -v
 uv run kedro viz
 ```
 
-### Cómo se ejecuta y por qué funciona
+### Qué es Kedro (y cómo se usa aquí)
 
-Al entrar a la carpeta del proyecto, el punto de entrada es **Kedro**: el archivo
-`pyproject.toml` declara `[tool.kedro]` (paquete `tostao_ml`, `src/` como raíz), de
-modo que `uv run kedro run` descubre `src/tostao_ml/pipeline_registry.py` y ejecuta,
-paso a paso, para cada caso:
+**Kedro** es un framework de orquestación para proyectos de datos: impone una
+estructura estándar (creada con la plantilla **cookiecutter** oficial de Kedro —
+un generador de andamiaje que produce siempre las mismas carpetas: `conf/`, `data/`
+por capas, `src/<paquete>/`, `pipelines/`) y aporta dos piezas clave:
 
-1. **Ingesta.** El `DataCatalog` (`conf/base/catalog.yml`) carga tipadas las 12
-   fuentes crudas de `data/01_raw` (no hay `pd.read_csv` sueltos).
+- El **`DataCatalog`** (`conf/base/catalog*.yml`): declara cada dataset por nombre,
+  su tipo y su ruta. El código nunca abre archivos con `pd.read_csv`; pide al
+  catálogo `catalog.load("a_ventas_historicas")`. Cambiar un origen es editar YAML.
+- Los **pipelines**: un pipeline es un grafo de **nodos** (funciones puras) donde
+  las salidas de uno son las entradas de otro. Kedro resuelve el orden por
+  dependencias y ejecuta.
+
+Sí: **Kedro es el ejecutor**. `uv run kedro run` es el punto de entrada. Kedro lee
+`[tool.kedro]` de `pyproject.toml` (paquete `tostao_ml`, `src/` como raíz), carga
+`src/tostao_ml/pipeline_registry.py` —donde se registran los pipelines de los tres
+casos— y ejecuta, para cada caso:
+
+1. **Ingesta.** El `DataCatalog` carga tipadas las fuentes crudas de `data/01_raw`.
 2. **Tabla maestra.** El nodo `build_master_*` cruza todas las fuentes del caso en
    una única tabla (`cases/masters.py`) y valida la cobertura de cada cruce.
 3. **Modelado.** El nodo del caso llama a `cases/caso_*.py`, que reutiliza el
@@ -112,11 +155,44 @@ paso a paso, para cada caso:
 4. **Salidas.** Métricas, órdenes/combos/coeficientes y el **modelo entrenado**
    (`data/06_models/*.pkl`) se persisten por el catálogo en las capas `>= 03`.
 
-Los **notebooks** (`notebooks/`) son la vitrina del análisis: importan `tostao_ml`
-y cargan por el catálogo (no reimplementan lógica). Los reportes HTML profundos se
-generan con `scripts/build_reports.py` y viven en `data/08_reporting` (no se
-versionan). Nada está hardcodeado: parámetros, costos y espacios de HPO están en
-`conf/`.
+### Cómo se entrelaza todo (arquitectura funcional)
+
+```
+conf/ (catálogo + parámetros)                     data/01_raw (fuentes)
+        │                                                │
+        ▼                                                ▼
+pipeline_registry ──> pipelines/caso_X ──> nodos ──> cases/masters (cruces)
+                                             │
+                                             ▼
+                        cases/caso_X ──reutiliza──> framework/ (features, models,
+                                             │        tuning, evaluation, interpret,
+                                             │        optimization, viz, narrate)
+                                             ▼
+                        artefactos: métricas, modelo.pkl, órdenes/combos/coefs
+                                             │
+                 ┌───────────────────────────┼───────────────────────────┐
+                 ▼                            ▼                            ▼
+     cases/reporting + storytelling   cases/executive          serving/api (FastAPI)
+     → reporte COMPLETO (08_reporting) → reporte EJECUTIVO       carga modelo.pkl y
+       gitignored                        (reports/ejecutivo)     sirve predicciones
+```
+
+Las **capas** dependen unas de otras, no al revés: `pipelines/` solo orquesta;
+`cases/` traduce cada problema de negocio a llamadas al `framework/`; el
+`framework/` es agnóstico al caso y no conoce a Tostao. Por eso un caso nuevo solo
+añade su master y su nodo de modelo.
+
+Los **notebooks** (`notebooks/`) corren **en paralelo** a este flujo: son la guía de
+exploración que un desarrollador hace antes (o al lado) de la puesta en producción.
+Importan `tostao_ml` y cargan por el catálogo —no reimplementan lógica—; hay uno de
+**EDA** y uno de **modelos** por caso, que producen las mismas figuras y lecturas que
+el reporte. El detalle por caso está en [Caso A](docs/caso_a.md) ·
+[Caso B](docs/caso_b.md) · [Caso C](docs/caso_c.md).
+
+**Reportes.** `scripts/build_reports.py` genera dos por caso: el **completo** (EDA a
+fondo + modelado interpretado, en `data/08_reporting`, no versionado) y el
+**ejecutivo** para negocio (`reports/ejecutivo/reporte_caso_*.html`, versionado).
+Nada está hardcodeado: parámetros, costos y espacios de HPO están en `conf/`.
 
 ### Docker
 

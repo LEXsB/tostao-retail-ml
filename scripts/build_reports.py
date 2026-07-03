@@ -1,11 +1,19 @@
-"""Construye las tablas maestras por caso y su reporte HTML **completo**.
+"""Construye las tablas maestras por caso y sus reportes HTML.
 
-Ejecutar con: ``uv run python scripts/build_masters_eda.py``
+Ejecutar con: ``uv run python scripts/build_reports.py``
 
 Carga las fuentes crudas por el catálogo de Kedro, cruza TODAS las fuentes de
-cada caso en su master table, la persiste en Parquet y genera un reporte HTML
-completo por caso (EDA detallado + apertura por variable objetivo + modelado +
-interpretabilidad + impacto de negocio + glosario) sobre la tabla cruzada.
+cada caso en su master table, la persiste en Parquet y genera dos reportes por caso
+sobre la tabla cruzada:
+
+- **Reporte completo** (``data/08_reporting/reporte_caso_*.html``, no versionado):
+  EDA a fondo + apertura por objetivo + modelado + interpretabilidad + negocio.
+- **Reporte ejecutivo** (``reports/ejecutivo/reporte_caso_*.html``, versionado): la
+  lectura para negocio (tarea, enfoque, métricas clave interpretadas e impacto),
+  sin el análisis exploratorio a fondo.
+
+Cada caso se entrena una sola vez y su resultado alimenta ambos reportes, de modo
+que las cifras coinciden.
 """
 
 from __future__ import annotations
@@ -15,7 +23,7 @@ from pathlib import Path
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
 
-from tostao_ml.cases import masters
+from tostao_ml.cases import caso_a, caso_b, caso_c, executive, masters
 from tostao_ml.cases.reporting import (
     build_unified_report,
     case_a_model_sections,
@@ -26,12 +34,14 @@ from tostao_ml.cases.reporting import (
 
 PRIMARY = Path("data/03_primary")
 REPORTING = Path("data/08_reporting")
+EJECUTIVO = Path("reports/ejecutivo")
 
 
 def main() -> None:
+    """Genera las tablas maestras y los reportes completo y ejecutivo por caso."""
     bootstrap_project(Path.cwd())
-    PRIMARY.mkdir(parents=True, exist_ok=True)
-    REPORTING.mkdir(parents=True, exist_ok=True)
+    for folder in (PRIMARY, REPORTING, EJECUTIVO):
+        folder.mkdir(parents=True, exist_ok=True)
 
     with KedroSession.create(project_path=Path.cwd()) as session:
         catalog = session.load_context().catalog
@@ -60,7 +70,15 @@ def main() -> None:
     master_b.to_parquet(PRIMARY / "master_caso_b.parquet")
     master_c.to_parquet(PRIMARY / "master_caso_c.parquet")
 
-    print("Generando reporte Caso A…")
+    # Cada caso se entrena una sola vez; el resultado alimenta ambos reportes.
+    print("Entrenando Caso A…")
+    result_a = caso_a.run_case_a(weekly_a, tune=True, n_trials=20)
+    print("Entrenando Caso B…")
+    result_b = caso_b.run_case_b(master_b, baskets_b, tune=True)
+    print("Entrenando Caso C…")
+    result_c = caso_c.run_case_c(master_c, tune=True)
+
+    print("Reporte completo Caso A…")
     full_case_report(
         "a",
         "Caso A — Abastecimiento · Reporte completo",
@@ -68,10 +86,11 @@ def main() -> None:
         "unidades_vendidas",
         "Demanda semanal por SKU-tienda enriquecida con catálogo, tiendas, inventario y tendencia.",
         rep_a,
-        case_a_model_sections(weekly_a),
+        case_a_model_sections(weekly_a, result_a),
     ).save(REPORTING / "reporte_caso_a.html")
+    executive.executive_a(weekly_a, result_a).save(EJECUTIVO / "reporte_caso_a.html", static=True)
 
-    print("Generando reporte Caso B…")
+    print("Reporte completo Caso B…")
     full_case_report(
         "b",
         "Caso B — Combos · Reporte completo",
@@ -79,10 +98,13 @@ def main() -> None:
         "importe_linea",
         "Líneas de ticket enriquecidas con cabecera y catálogo; base para clustering y combos.",
         rep_b,
-        case_b_model_sections(master_b, baskets_b),
+        case_b_model_sections(master_b, baskets_b, result_b),
     ).save(REPORTING / "reporte_caso_b.html")
+    executive.executive_b(master_b, baskets_b, result_b).save(
+        EJECUTIVO / "reporte_caso_b.html", static=True
+    )
 
-    print("Generando reporte Caso C…")
+    print("Reporte completo Caso C…")
     full_case_report(
         "c",
         "Caso C — AOV · Reporte completo",
@@ -90,17 +112,19 @@ def main() -> None:
         "total_venta",
         "Tickets enriquecidos con loyalty, exógenas e intensidad de promociones.",
         rep_c,
-        case_c_model_sections(master_c),
+        case_c_model_sections(master_c, result_c),
     ).save(REPORTING / "reporte_caso_c.html")
+    executive.executive_c(master_c, result_c).save(EJECUTIVO / "reporte_caso_c.html", static=True)
 
-    print("Generando reporte unificado…")
+    print("Reporte unificado…")
     build_unified_report(weekly_a, master_a, master_b, baskets_b, master_c).save(
         REPORTING / "reporte_unificado.html"
     )
 
     print("\n=== ARTEFACTOS ===")
-    for p in sorted(REPORTING.glob("reporte_*.html")):
-        print(f"  {p}  ({p.stat().st_size / 1024:.0f} KB)")
+    for folder in (EJECUTIVO, REPORTING):
+        for p in sorted(folder.glob("reporte_*.html")):
+            print(f"  {p}  ({p.stat().st_size / 1024:.0f} KB)")
 
 
 if __name__ == "__main__":
