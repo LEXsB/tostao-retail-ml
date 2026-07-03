@@ -130,7 +130,7 @@ exclude = ["notebooks/", "data/", "build/"]
 testpaths = ["tests"]
 # Raíz al path para importar el paquete top-level `serving` (fuera de src/).
 pythonpath = ["."]
-addopts = "-ra --strict-markers --cov=tostao_ml --cov-report=term-missing --cov-report=xml"
+addopts = "-ra --strict-markers --cov=tostao_ml --cov-report=term-missing"
 markers = [
     "unit: pruebas unitarias rápidas y aisladas",
     "integration: pipelines Kedro end-to-end sobre datos sintéticos",

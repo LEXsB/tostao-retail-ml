@@ -11,11 +11,10 @@
 
 ## Checklist
 
-- [ ] `ruff` + `black` + `mypy` pasan localmente (`uv run pre-commit run --all-files`).
+- [ ] `ruff` (check + format) + `mypy` pasan localmente (`uv run pre-commit run --all-files`).
 - [ ] Pruebas añadidas/actualizadas y `uv run pytest` en verde.
 - [ ] Pipelines de humo ejecutan (`uv run kedro run --pipeline <...>`).
 - [ ] Sin lógica duplicada: lo reutilizable subió al `framework/`.
-- [ ] Cambios registrados en `CHANGELOG.md`.
 
 ## Notas de reutilización
 

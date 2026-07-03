@@ -26,19 +26,18 @@ mlruns/
 mlartifacts/
 .telemetry
 kedro-viz-*/
+.viz/
 
 # --- Datos (convención Kedro): capas derivadas git-ignored; el crudo 01_raw sí se versiona ---
 # Se ignora el CONTENIDO generado de cada capa derivada pero se conserva la
 # carpeta (vía .gitkeep). La capa 01_raw se versiona completa (datos de entrada).
-data/02_intermediate/*
 data/03_primary/*
-data/04_feature/*
-data/05_model_input/*
 data/06_models/*
 data/07_model_output/*
 data/08_reporting/*
 !data/**/.gitkeep
 data/01_raw/**/*.parquet
+data.zip
 
 # --- Notebooks: outputs limpiados con nbstripout ---
 .ipynb_checkpoints/
