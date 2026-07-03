@@ -19,6 +19,33 @@ el flujo se orquesta con Kedro y cada nodo emite, junto a sus artefactos, una
 Explicación detallada de cómo funciona cada caso: [Caso A](docs/caso_a.md) ·
 [Caso B](docs/caso_b.md) · [Caso C](docs/caso_c.md).
 
+## Glosario
+
+Términos y herramientas que aparecen en el repositorio (los específicos de cada caso
+están en su propio README):
+
+- **uv** — gestor de entorno y paquetes de Python: fija la versión de Python, crea el
+  `.venv`, instala dependencias con lockfile y ejecuta comandos (`uv run …`).
+- **Kedro** — framework que orquesta el flujo de datos (catálogo de datasets +
+  pipelines de nodos); es el ejecutor (`kedro run`).
+- **cookiecutter** — generador de andamiaje que crea la estructura estándar del
+  proyecto (`conf/`, `data/`, `src/`, …).
+- **MLflow** — registro (*tracking*) de experimentos, métricas y modelos.
+- **DVC** — versionado de datos y artefactos derivados (complementa a Git para
+  archivos grandes/generados).
+- **Pandera** — validación de esquemas de datos (tipos, rangos, unicidad): contratos
+  que hacen fallar el pipeline ante datos inválidos.
+- **Optuna** — optimización de hiperparámetros (búsqueda TPE).
+- **SHAP** — interpretabilidad: contribución de cada variable a la predicción.
+- **FastAPI + Uvicorn** — API de inferencia (*serving*) y su servidor.
+- **Prometheus + Grafana** — métricas y tableros de observabilidad.
+- **ruff / mypy / pytest** — lint y formato / tipos estáticos / pruebas.
+- **HPO** — *Hyperparameter Optimization*, optimización de hiperparámetros.
+- **holdout** — partición de datos reservada para evaluar, que no se usa al entrenar.
+- **ensemble** — combinación de varios modelos para mejorar la predicción.
+- **drift (PSI/KS)** — desviación de los datos en producción respecto al
+  entrenamiento; se detecta con el índice PSI y la prueba KS.
+
 ## Por qué lo construimos así (decisiones de diseño)
 
 - **Framework antes que casos.** El núcleo (EDA, features, modelos, HPO, evaluación,
