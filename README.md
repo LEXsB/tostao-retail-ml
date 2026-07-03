@@ -184,9 +184,11 @@ añade su master y su nodo de modelo.
 
 Los **notebooks** (`notebooks/`) corren **en paralelo** a este flujo: son la guía de
 exploración que un desarrollador hace antes (o al lado) de la puesta en producción.
-Importan `tostao_ml` y cargan por el catálogo —no reimplementan lógica—; hay uno de
-**EDA** y uno de **modelos** por caso, que producen las mismas figuras y lecturas que
-el reporte. El detalle por caso está en [Caso A](docs/caso_a.md) ·
+Importan `tostao_ml` y cargan por el catálogo; por caso hay uno de **EDA**
+(`01_eda`) y uno de **modelamiento** (`02_modelamiento`) que **despliega el modelo
+por dentro** —features, partición, HPO, ajuste, evaluación, comparación e impacto—
+con las mismas piezas del framework que usa producción, para que se vea el
+modelamiento y se reproduzca. El detalle por caso está en [Caso A](docs/caso_a.md) ·
 [Caso B](docs/caso_b.md) · [Caso C](docs/caso_c.md).
 
 **Reportes.** `scripts/build_reports.py` genera dos por caso: el **completo** (EDA a

@@ -33,8 +33,9 @@ uv run kedro run --pipeline caso_a   # o caso_b / caso_c
 ## Notebooks y reportes
 
 Cada caso tiene, en paralelo al pipeline, un notebook de **EDA**
-(`notebooks/caso_*/01_eda.ipynb`) y uno de **modelos**
-(`notebooks/caso_*/02_modelos.ipynb`) que reproducen el análisis a mano. El
+(`notebooks/caso_*/01_eda.ipynb`) y uno de **modelamiento**
+(`notebooks/caso_*/02_modelamiento.ipynb`) que despliega el modelo por dentro
+(features, HPO, ajuste, evaluación) tal como producción. El
 detalle por caso está en [Caso A](caso_a.md), [Caso B](caso_b.md) y
 [Caso C](caso_c.md). El reporte **ejecutivo** por caso se genera en
 `reports/ejecutivo/` con `uv run python scripts/build_reports.py`.
