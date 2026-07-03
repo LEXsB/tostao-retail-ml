@@ -73,6 +73,16 @@ docs/                     # MkDocs (mkdocstrings) + un documento por caso
 | **Disco** | ~2 GB para el entorno virtual (`.venv`) y las dependencias. |
 | **Opcional** | Docker + Docker Compose para el stack de serving/observabilidad. |
 
+**¿Qué es `uv`?** Es un gestor de proyectos y paquetes de Python, muy rápido (escrito
+en Rust por el equipo de `ruff`). Reúne en una sola herramienta lo que antes exigía
+varias: instala y **fija la versión de Python** (no hace falta tenerla preinstalada),
+crea el **entorno virtual** (`.venv`), resuelve e instala las **dependencias** con un
+**lockfile** (`uv.lock`) para reproducibilidad exacta, y **ejecuta** comandos dentro
+del entorno (`uv run …`). En la práctica es el equivalente de `npm`/`yarn` para
+Python. Por eso `uv sync` (prepara el entorno) y `uv run kedro run` (ejecuta el
+pipeline) funcionan igual en cualquier máquina, sin instalar nada a mano. Se instala
+en segundos (`pip install uv` o el instalador oficial); ver [docs](https://docs.astral.sh/uv/).
+
 **El stack (dependencias principales y su rol).** Las versiones exactas quedan
 fijadas en `uv.lock`; estas son las cotas declaradas en `pyproject.toml`:
 
