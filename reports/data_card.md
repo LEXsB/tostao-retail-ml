@@ -1,14 +1,14 @@
 # Data Card — Fuentes y tablas maestras
 
-Describo las fuentes crudas provistas y cómo las cruzo en una **tabla maestra por
-caso**. La cobertura de cada cruce se calcula en el pipeline (integridad
-referencial) y se reporta como % de filas del hecho con match.
+Este documento describe las fuentes crudas provistas y cómo se cruzan en una
+**tabla maestra por caso**. La cobertura de cada cruce se calcula en el pipeline
+(integridad referencial) y se reporta como % de filas del hecho con match.
 
 ## Origen y gobierno
 
 - **Ruta canónica:** `data/01_raw/` (SOLO LECTURA). Nunca se sobreescribe; toda
-  transformación se escribe aguas abajo (`02_intermediate` … `08_reporting`).
-- **Respaldo inmutable:** `data.zip`.
+  transformación se escribe aguas abajo, en las capas derivadas (`03_primary`,
+  `06_models`, `07_model_output`, `08_reporting`), que se regeneran con `kedro run`.
 - **Versionado:** los datos de entrada se versionan (Git para el crudo pequeño;
   DVC/Kedro para artefactos derivados). Ver `dvc.yaml`.
 
