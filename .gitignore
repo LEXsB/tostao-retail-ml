@@ -41,6 +41,7 @@ data.zip
 
 # --- Notebooks: outputs limpiados con nbstripout ---
 .ipynb_checkpoints/
+notebooks/_ejecutados/
 
 # --- IDE / SO ---
 .idea/
