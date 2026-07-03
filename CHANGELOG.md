@@ -6,6 +6,21 @@ y el versionado semántico ([SemVer](https://semver.org/lang/es/)).
 
 ## [Sin publicar]
 
+### Añadido (reportes ejecutivos, notebooks de modelos y documentación)
+- **Reporte ejecutivo por caso** (`cases/executive.py`): HTML de una pasada para
+  negocio (tarea, enfoque, métricas clave interpretadas e impacto), sin el EDA a
+  fondo. Se versiona en `reports/ejecutivo/reporte_caso_*.html`; el reporte completo
+  sigue en `data/08_reporting/` (no versionado). Cada caso se entrena una sola vez y
+  alimenta ambos reportes.
+- **Notebook de modelos por caso** (`notebooks/caso_*/02_modelos.ipynb`): en paralelo
+  al de EDA, reproduce a mano el modelado (train/test, HPO, comparación, desempeño,
+  interpretabilidad e impacto), reutilizando `tostao_ml`.
+- **README enriquecido**: requisitos mínimos y entorno, tabla de versiones del stack,
+  qué es Kedro y la plantilla cookiecutter, y un diagrama de cómo se entrelazan
+  framework, casos, pipelines y `pipeline_registry`. Cada README de caso suma su
+  contexto de ejecución y su relación con el registro y el framework, con referencias
+  cruzadas.
+
 ### Añadido (calificación de periodos futuros)
 - **Persistencia de artefactos entrenados**: los pipelines de Caso A y C guardan el
   modelo entrenado en `data/06_models/` (`modelo_caso_a.pkl`, `modelo_caso_c.pkl`)

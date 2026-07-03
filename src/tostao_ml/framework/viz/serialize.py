@@ -53,6 +53,42 @@ def plotly_js_bundle() -> str:
     return f'<script type="text/javascript">{_sin_iconos(get_plotlyjs())}</script>'
 
 
+def figure_to_png_img(fig: go.Figure, *, width: int = 760, height: int = 430) -> str:
+    """Convierte una figura en una imagen PNG estática embebida (data URI base64).
+
+    Pensado para reportes livianos (ejecutivos): la página no necesita ``plotly.js``,
+    por lo que el HTML pesa pocos KB y es imprimible. Usa la API directa de kaleido,
+    compatible con la versión de Plotly instalada.
+
+    Args:
+        fig: Figura a rasterizar.
+        width: Ancho del PNG en píxeles.
+        height: Alto del PNG en píxeles.
+
+    Returns:
+        Etiqueta ``<img>`` con el PNG embebido como ``data:`` URI.
+    """
+    import base64
+
+    import kaleido
+
+    sized = go.Figure(fig)
+    sized.update_layout(width=width, height=height)
+    png = kaleido.calc_fig_sync(sized)
+    b64 = base64.b64encode(png).decode("ascii")
+    return f'<img alt="figura" style="width:100%;height:auto" src="data:image/png;base64,{b64}">'
+
+
+def stop_image_backend() -> None:
+    """Detiene el servidor de kaleido (libera el proceso de Chrome tras exportar)."""
+    try:
+        import kaleido
+
+        kaleido.stop_sync_server()
+    except Exception:  # pragma: no cover - limpieza best-effort
+        pass
+
+
 def save_figure(fig: go.Figure, path: str | Path, *, self_contained: bool = True) -> Path:
     """Guarda una figura como HTML interactivo en disco.
 

@@ -59,3 +59,29 @@ uv run kedro run --pipeline caso_b
 
 Archivos clave: `cases/caso_b.py` (perfiles, clustering, reglas, grafo, combos),
 `pipelines/caso_b/`.
+
+## Contexto de ejecución y relación con el proyecto
+
+**Entorno.** El mismo entorno del proyecto (Python 3.13 + `uv`) **más el extra
+`caso_b`** para las reglas de asociación y el grafo:
+`uv sync --extra caso_b` (instala `mlxtend`, `efficient-apriori`, `networkx`). Ver
+[requisitos y stack](../README.md#requisitos-mínimos-y-entorno).
+
+**Cómo encaja en el flujo (resumen).**
+
+- **Registro.** `pipeline_registry.py` registra este pipeline como `caso_b` y lo
+  añade al `__default__`.
+- **Pipeline.** `pipelines/caso_b/` encadena `build_master_b` (cruce + matriz de
+  cestas) y el nodo de segmentación/combos; entradas y salidas son nombres del
+  catálogo (`conf/base/catalog*.yml`).
+- **Lógica.** Los nodos delegan en `cases/masters.py` y en
+  `cases/caso_b.py::run_case_b`, que **reutiliza el framework** (`models` para
+  K-Means, `viz`, `narrate`) y añade lo específico del caso (FP-Growth, grafo). Al
+  ser no supervisado no hay artefacto de modelo persistido: la salida son las reglas
+  y los combos.
+- **Reportes y notebooks.** Completo en `cases/reporting.py`; ejecutivo en
+  `cases/executive.py::executive_b`; exploración en `notebooks/caso_b/`.
+
+**Relación con los otros casos.** Comparte framework y patrón master → modelo →
+reporte con los demás. Ver [Caso A](caso_a.md) · [Caso C](caso_c.md) y el
+[README general](../README.md).

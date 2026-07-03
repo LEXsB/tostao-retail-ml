@@ -60,3 +60,28 @@ uv run kedro run --pipeline caso_c
 
 Archivos clave: `cases/caso_c.py` (GLM inferencial + predictivo + comparación),
 `pipelines/caso_c/`, `models/linear.py` (GLM), `interpret/` (SHAP).
+
+## Contexto de ejecución y relación con el proyecto
+
+**Entorno.** El mismo entorno reproducible del proyecto (Python 3.13 + `uv`, ver
+[requisitos y stack](../README.md#requisitos-mínimos-y-entorno)); no requiere extras
+adicionales.
+
+**Cómo encaja en el flujo (resumen).**
+
+- **Registro.** `pipeline_registry.py` registra este pipeline como `caso_c` y lo
+  añade al `__default__`.
+- **Pipeline.** `pipelines/caso_c/` encadena `build_master_c` y `aov_models_c`;
+  entradas y salidas son nombres del catálogo. La salida `c_modelo` persiste el
+  modelo **predictivo** de gasto en `data/06_models/modelo_caso_c.pkl` (el GLM es
+  inferencial y no se persiste como artefacto de scoring).
+- **Lógica.** Los nodos delegan en `cases/masters.py` y en
+  `cases/caso_c.py::run_case_c`, que **reutiliza el framework** (`models/linear.py`
+  para el GLM, `tuning` para Optuna, `evaluation` para las métricas, `interpret`
+  para SHAP).
+- **Reportes y notebooks.** Completo en `cases/reporting.py`; ejecutivo en
+  `cases/executive.py::executive_c`; exploración en `notebooks/caso_c/`.
+
+**Relación con los otros casos.** Comparte framework y patrón master → modelo →
+reporte con los demás. Ver [Caso A](caso_a.md) · [Caso B](caso_b.md) y el
+[README general](../README.md).
