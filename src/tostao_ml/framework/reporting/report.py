@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from tostao_ml.framework.narrate import Narrative
-from tostao_ml.framework.viz.serialize import figure_to_div, plotly_js_bundle
+from tostao_ml.framework.viz.serialize import figure_to_div, figure_to_png_img, plotly_js_bundle
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -71,44 +71,54 @@ class HTMLReport:
         self.sections.append(section)
         return self
 
-    def render(self) -> str:
-        """Renderiza el reporte completo a una cadena HTML autocontenida."""
+    def render(self, *, static: bool = False) -> str:
+        """Renderiza el reporte a una cadena HTML autocontenida.
+
+        Args:
+            static: Si ``True``, las figuras se embeben como PNG (sin ``plotly.js``),
+                produciendo un HTML liviano e imprimible (usado por el reporte
+                ejecutivo). Si ``False``, figuras interactivas con el bundle embebido.
+        """
         template = self._env.get_template("report.html.j2")
         return template.render(
             title=self.title,
             subtitle=self.subtitle,
             context=self.context,
             footer=self.footer,
-            plotly_js=plotly_js_bundle(),
-            sections=[self._render_section(s) for s in self.sections],
+            plotly_js="" if static else plotly_js_bundle(),
+            sections=[self._render_section(s, static=static) for s in self.sections],
         )
 
-    def save(self, path: str | Path) -> Path:
+    def save(self, path: str | Path, *, static: bool = False) -> Path:
         """Renderiza y guarda el reporte en disco (UTF-8)."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(self.render(), encoding="utf-8")
+        path.write_text(self.render(static=static), encoding="utf-8")
         return path
 
     @staticmethod
-    def _render_section(section: ReportSection) -> dict[str, object]:
-        """Prepara el contexto Jinja2 de una sección (figuras→div, tablas→html)."""
+    def _render_section(section: ReportSection, *, static: bool = False) -> dict[str, object]:
+        """Prepara el contexto Jinja2 de una sección (figuras→div/img, tablas→html)."""
         insights = section.narrative.to_dicts() if section.narrative else []
         worst = (
             section.narrative.worst_severity.value
             if section.narrative and len(section.narrative)
             else ""
         )
+        figures = {}
+        for i, (name, fig) in enumerate(section.figures.items()):
+            figures[name] = (
+                figure_to_png_img(fig)
+                if static
+                else figure_to_div(fig, div_id=f"{section.id}__{i}")
+            )
         return {
             "id": section.id,
             "title": section.title,
             "description": section.description,
             "insights": insights,
             "worst_severity": worst,
-            "figures": {
-                name: figure_to_div(fig, div_id=f"{section.id}__{i}")
-                for i, (name, fig) in enumerate(section.figures.items())
-            },
+            "figures": figures,
             "tables": {
                 name: df.to_html(classes="table", border=0, float_format=lambda v: f"{v:,.3f}")
                 for name, df in section.tables.items()

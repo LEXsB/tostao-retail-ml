@@ -374,9 +374,14 @@ def strategy_c(result: caso_c.CaseCResult) -> ReportSection:
     )
 
 
-def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
-    """Construye las secciones de modelado e interpretabilidad del Caso A."""
-    result = caso_a.run_case_a(weekly, tune=True, n_trials=20)
+def case_a_model_sections(
+    weekly: pd.DataFrame, result: caso_a.CaseAResult | None = None
+) -> list[ReportSection]:
+    """Construye las secciones de modelado e interpretabilidad del Caso A.
+
+    Si se pasa ``result`` se reutiliza (para no reentrenar); si no, se ejecuta el caso.
+    """
+    result = result or caso_a.run_case_a(weekly, tune=True, n_trials=20)
     test = result.test
     perf = ReportSection(
         id="a_modelo",
@@ -439,9 +444,14 @@ def case_a_model_sections(weekly: pd.DataFrame) -> list[ReportSection]:
     return [strategy_a(result), perf, interp]
 
 
-def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list[ReportSection]:
-    """Construye las secciones de segmentacion, reglas y combos del Caso B."""
-    result = caso_b.run_case_b(master_b, baskets, tune=True)
+def case_b_model_sections(
+    master_b: pd.DataFrame, baskets: pd.DataFrame, result: caso_b.CaseBResult | None = None
+) -> list[ReportSection]:
+    """Construye las secciones de segmentacion, reglas y combos del Caso B.
+
+    Si se pasa ``result`` se reutiliza (para no reentrenar); si no, se ejecuta el caso.
+    """
+    result = result or caso_b.run_case_b(master_b, baskets, tune=True)
     seg = ReportSection(
         id="b_modelo",
         title="Caso B · Lectura de la segmentación y las reglas",
@@ -492,9 +502,14 @@ def case_b_model_sections(master_b: pd.DataFrame, baskets: pd.DataFrame) -> list
     return [strategy_b(result), seg, combos]
 
 
-def case_c_model_sections(master_c: pd.DataFrame) -> list[ReportSection]:
-    """Construye las secciones de drivers y prediccion del Caso C."""
-    result = caso_c.run_case_c(master_c, tune=True)
+def case_c_model_sections(
+    master_c: pd.DataFrame, result: caso_c.CaseCResult | None = None
+) -> list[ReportSection]:
+    """Construye las secciones de drivers y prediccion del Caso C.
+
+    Si se pasa ``result`` se reutiliza (para no reentrenar); si no, se ejecuta el caso.
+    """
+    result = result or caso_c.run_case_c(master_c, tune=True)
     drivers = ReportSection(
         id="c_modelo",
         title="Caso C · Lectura de resultados (drivers y predicción)",

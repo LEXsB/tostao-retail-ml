@@ -72,3 +72,29 @@ uv run kedro run --pipeline caso_a
 ```
 
 Archivos clave: `cases/caso_a.py`, `pipelines/caso_a/`, `optimization/newsvendor.py`.
+
+## Contexto de ejecución y relación con el proyecto
+
+**Entorno.** El mismo entorno reproducible del proyecto (Python 3.13 + `uv`, ver
+[requisitos y stack](../README.md#requisitos-mínimos-y-entorno)); este caso no
+requiere extras adicionales.
+
+**Cómo encaja en el flujo (resumen).**
+
+- **Registro.** `src/tostao_ml/pipeline_registry.py` registra este pipeline bajo la
+  clave `caso_a` y lo suma al pipeline `__default__` (lo que corre `kedro run`).
+- **Pipeline.** `pipelines/caso_a/` encadena dos nodos —`build_master_a` y
+  `forecast_and_optimize_a`—; sus entradas y salidas son **nombres del catálogo**
+  (`conf/base/catalog*.yml`), no rutas. La salida `a_modelo` persiste el modelo
+  entrenado en `data/06_models/modelo_caso_a.pkl`.
+- **Lógica.** Los nodos son finos: delegan en `cases/masters.py` (cruces) y en
+  `cases/caso_a.py::run_case_a`, que **reutiliza el framework** (`framework/features`,
+  `models`, `tuning`, `evaluation`, `interpret`, `optimization`). El framework es
+  agnóstico al caso: no conoce a Tostao.
+- **Reportes y notebooks.** El completo lo arma `cases/reporting.py` +
+  `storytelling.py`; el ejecutivo, `cases/executive.py::executive_a`. En paralelo,
+  `notebooks/caso_a/` contiene el EDA y el análisis de modelos.
+
+**Relación con los otros casos.** Los tres comparten el mismo `framework/` y el mismo
+patrón master → modelo → reporte; solo cambian la tabla maestra y el nodo de modelo.
+Ver [Caso B](caso_b.md) · [Caso C](caso_c.md) y el [README general](../README.md).
