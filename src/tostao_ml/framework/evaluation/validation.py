@@ -11,7 +11,7 @@ from collections.abc import Callable, Iterator
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit
+from sklearn.model_selection import KFold, TimeSeriesSplit
 
 Splitter = Callable[[pd.DataFrame], Iterator[tuple[np.ndarray, np.ndarray]]]
 
@@ -38,21 +38,6 @@ def kfold_splitter(n_splits: int = 5, shuffle: bool = True, seed: int = 42) -> S
 
     def _split(X: pd.DataFrame) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         yield from splitter.split(X)
-
-    return _split
-
-
-def stratified_kfold_splitter(
-    y: pd.Series | np.ndarray, n_splits: int = 5, shuffle: bool = True, seed: int = 42
-) -> Splitter:
-    """K-Fold estratificado por ``y`` (clasificación desbalanceada)."""
-    splitter = StratifiedKFold(
-        n_splits=n_splits, shuffle=shuffle, random_state=seed if shuffle else None
-    )
-    y_arr = np.asarray(y)
-
-    def _split(X: pd.DataFrame) -> Iterator[tuple[np.ndarray, np.ndarray]]:
-        yield from splitter.split(X, y_arr)
 
     return _split
 
