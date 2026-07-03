@@ -206,6 +206,80 @@ casos— y ejecuta, para cada caso:
 4. **Salidas.** Métricas, órdenes/combos/coeficientes y el **modelo entrenado**
    (`data/06_models/*.pkl`) se persisten por el catálogo en las capas `>= 03`.
 
+### Cómo se crea un proyecto Kedro (y qué genera)
+
+Un proyecto Kedro se crea con el comando interactivo **`kedro new`**, que a partir de
+la plantilla **cookiecutter** oficial pregunta el nombre y qué *tools* incluir
+(Linting, Testing, Custom Logging, Documentation, Data Structure, PySpark, Kedro-Viz)
+y si añadir un pipeline de ejemplo. Este repositorio se generó con las tools
+**Linting, Testing, Custom Logging y Data Structure**, sin pipeline de ejemplo (se ve
+en `[tool.kedro]` de `pyproject.toml`).
+
+Con esa elección, Kedro genera de fábrica esta estructura (aquí ya poblada por el
+proyecto):
+
+```text
+conf/
+  base/               # configuración versionada
+    catalog.yml       # datasets (aquí + catalog_cases.yml)
+    parameters.yml    # parámetros por caso
+    logging.yml       # (tool «Custom Logging»)
+  local/              # overrides y credenciales LOCALES (gitignored)
+data/                 # 8 capas 01_raw … 08_reporting (tool «Data Structure»)
+src/tostao_ml/
+  __init__.py
+  __main__.py           # envoltorio del CLI de Kedro (python -m tostao_ml)
+  settings.py           # config loader (OmegaConf), hooks y patrones de config
+  pipeline_registry.py  # registro de pipelines (ver abajo)
+  pipelines/            # un subpaquete por pipeline
+tests/                  # (tool «Testing»)
+notebooks/
+pyproject.toml          # incluye la sección [tool.kedro]
+```
+
+El resto (`framework/`, `cases/`, los pipelines de cada caso, `serving/`,
+`deployment/`, reportes) lo añadimos nosotros: Kedro solo aporta el andamiaje y los
+puntos de extensión. Dos piezas de configuración clave:
+
+- **`settings.py`** declara el *config loader* (`OmegaConfigLoader`), los entornos
+  (`base`, versionado, y `local`, para secretos y gitignored) y los patrones que
+  permiten dividir el catálogo y los parámetros en varios archivos (`catalog*`,
+  `parameters*`, `mlflow*`) — por eso conviven `catalog.yml` y `catalog_cases.yml`.
+- **`conf/base` vs `conf/local`:** `base` se versiona; `local` (credenciales, rutas de
+  máquina) nunca sube al repositorio.
+
+### El `pipeline_registry`
+
+`src/tostao_ml/pipeline_registry.py` es el punto donde Kedro **descubre** los
+pipelines. Expone una única función, `register_pipelines()`, que devuelve un
+diccionario `nombre → Pipeline`:
+
+```python
+def register_pipelines() -> dict[str, Pipeline]:
+    pipelines = {
+        "caso_a": caso_a.create_pipeline(),
+        "caso_b": caso_b.create_pipeline(),
+        "caso_c": caso_c.create_pipeline(),
+    }
+    pipelines["__default__"] = pipelines["caso_a"] + pipelines["caso_b"] + pipelines["caso_c"]
+    return pipelines
+```
+
+Cómo se usa:
+
+- Al arrancar, Kedro llama a `register_pipelines()` y guarda ese mapa.
+- **`kedro run`** (sin argumentos) ejecuta la clave especial **`__default__`** —aquí,
+  los tres casos encadenados—.
+- **`kedro run --pipeline caso_a`** ejecuta solo ese pipeline por su nombre.
+- **`kedro registry list`** lista los nombres registrados (se usa como prueba de humo
+  en la CI).
+
+Cada `create_pipeline()` (en `pipelines/caso_*/pipeline.py`) compone sus **nodos**
+—funciones puras con entradas y salidas nombradas del catálogo— y los pipelines se
+pueden **sumar** con `+` para combinarlos, que es justo como se arma el `__default__`.
+Así, añadir un caso nuevo se reduce a escribir su `create_pipeline()` y registrarlo
+con una línea.
+
 ### Cómo se entrelaza todo (arquitectura funcional)
 
 ```
