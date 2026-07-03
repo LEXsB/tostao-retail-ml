@@ -128,6 +128,20 @@ uv run pytest -m calificacion -v
 uv run kedro viz
 ```
 
+### Atajo: ejecutar todo desde un notebook
+
+Para quien prefiere no usar la terminal (o trabaja en Google Colab), hay dos
+notebooks orquestadores que se abren y se ejecutan con *Run All*:
+
+- **`notebooks/run_pipeline.ipynb`** — prepara el entorno con `uv` y corre el
+  pipeline completo (`kedro run` de los tres casos) más los reportes.
+- **`notebooks/run_notebooks.ipynb`** — ejecuta uno a uno los notebooks de EDA y
+  modelamiento de cada caso y guarda las copias ejecutadas (con gráficos) en
+  `notebooks/_ejecutados/`.
+
+Ambos instalan `uv` si falta y no requieren Python 3.13 preinstalado ni subir los
+datos aparte (el crudo ya está versionado en `data/01_raw/`).
+
 ### Qué es Kedro (y cómo se usa aquí)
 
 **Kedro** es un framework de orquestación para proyectos de datos: impone una
