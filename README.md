@@ -55,7 +55,7 @@ src/tostao_ml/
   pipelines/              # pipelines Kedro que orquestan el framework por caso
 serving/api/              # API FastAPI de inferencia (endpoints por caso)
 deployment/               # docker-compose + monitoreo (Prometheus/Grafana)
-notebooks/                # guía de análisis en paralelo (EDA + modelos por caso)
+notebooks/                # guía de análisis en paralelo (EDA + modelamiento por caso)
 tests/                    # unit + integration + data_contracts
 reports/                  # model card, data card, y reports/ejecutivo (HTML por caso)
 docs/                     # MkDocs (mkdocstrings) + un documento por caso
@@ -90,8 +90,8 @@ fijadas en `uv.lock`; estas son las cotas declaradas en `pyproject.toml`:
 | `mlxtend` / `networkx` *(extra `caso_b`)* | ≥ 0.23 / ≥ 3.3 | Reglas de asociación y grafo de co-compra. |
 | `fastapi` / `uvicorn` *(extra `serving`)* | ≥ 0.111 / ≥ 0.30 | API de inferencia. |
 
-Herramientas de desarrollo (grupo `dev`): `pytest`+`pytest-cov`, `ruff`, `black`,
-`mypy`, `pre-commit`, `mkdocs`+`mkdocs-material`, `jupyter`.
+Herramientas de desarrollo (grupo `dev`): `pytest`+`pytest-cov`, `ruff` (lint y
+formato), `mypy`, `pre-commit`, `mkdocs`+`mkdocs-material`, `jupyter`.
 
 ## Puesta en marcha (reproducible)
 
