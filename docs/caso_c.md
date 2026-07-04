@@ -21,21 +21,80 @@ Existe alta variabilidad en el ticket promedio (AOV) entre sucursales. Se necesi
 y (2) estimar el **gasto esperado** de un cliente recurrente en su próxima visita
 (modelo **predictivo**), con interpretabilidad y manejo de outliers.
 
-## Datos y tabla maestra
+## Datos, cruces y tabla maestra
 
-Se cruzan las cuatro fuentes de `03_aov_drivers`:
+**Tabla de hechos (grano base):** `transacciones_resumen` — una fila por **ticket**
+(10.000 filas). Se enganchan con **LEFT JOIN** tres fuentes de `03_aov_drivers`:
 
+| # | Fuente unida | Llave del cruce | Cardinalidad | Aporta | Cobertura |
+|---|--------------|-----------------|--------------|--------|-----------|
+| 1 | `clientes_loyalty` | `id_cliente` | N:1 | edad, segmento, antigüedad | 100 % |
+| 2 | `variables_exogenas` | `fecha + id_tienda` | N:1 | clima, competencia, tráfico | 100 % |
+| 3 | `promociones_activas` (→ intensidad) | `fecha + id_tienda` | N:1 | nº de promos activas | 98.4 %* |
+
+\*Cobertura de promo = **% de tickets con al menos una promo activa**; 0 promos es un
+valor válido, no un cruce roto (ver abajo).
+
+**Cómo se decidió (y por qué así).**
+
+- El **ticket** es el hecho. Le pego el **perfil del cliente** por `id_cliente` (1.000
+  clientes únicos) y las **condiciones exógenas** del día y la tienda por `fecha +
+  id_tienda` (910 combinaciones únicas). Ambas son N:1.
+- Las **promociones** son distintas: no son un hecho por día, sino **rangos de fecha**
+  (`fecha_inicio`–`fecha_fin`) por tienda/producto. Unirlas directo sería un cruce por
+  rango (**many-to-many**) que **duplicaría** tickets. Por eso primero las **expando a
+  días** y las **cuento por `(fecha, id_tienda)`** en una tabla de **intensidad**
+  (`n_promos_activas`, 894 combinaciones únicas derivadas de 493 promos). Esa tabla ya
+  es N:1 y se une limpio; los tickets sin promo reciben **0** (no NULL).
+
+**Resultado verificado (sin duplicidad, sin cruces vacíos).**
+
+- **Sin duplicidad:** la maestra tiene **10.000 filas = exactamente los tickets**; ni
+  siquiera la promo (gracias a su pre-agregación a intensidad) multiplicó filas.
+- **Sin cruces vacíos en las uniones de integridad:** `clientes_loyalty` y
+  `variables_exogenas` cubren **100 %**. La promo cubre **98.4 %**, pero eso **no es un
+  cruce vacío**: es la **penetración** de promociones (el 1.6 % restante son tickets
+  sin promo, que legítimamente valen 0).
+
+Código: `cases/masters.py::build_master_c` y `_promo_intensity`.
+
+### Diagrama entidad-relación (ERD)
+
+```mermaid
+erDiagram
+    CLIENTES_LOYALTY ||--o{ TRANSACCIONES_RESUMEN : "id_cliente"
+    VARIABLES_EXOGENAS ||--o{ TRANSACCIONES_RESUMEN : "fecha + id_tienda"
+    PROMOCIONES_ACTIVAS ||--o{ TRANSACCIONES_RESUMEN : "fecha + id_tienda (intensidad)"
+    TRANSACCIONES_RESUMEN {
+        string id_cliente FK
+        string id_tienda FK
+        datetime timestamp
+        float total_venta
+        int total_articulos
+    }
+    CLIENTES_LOYALTY {
+        string id_cliente PK
+        int edad
+        string segmento
+        date fecha_registro
+    }
+    VARIABLES_EXOGENAS {
+        date fecha PK
+        string id_tienda PK
+        string clima
+        float competitor_price_index
+        int indice_trafico
+    }
+    PROMOCIONES_ACTIVAS {
+        string id_tienda
+        string id_producto
+        date fecha_inicio
+        date fecha_fin
+    }
 ```
-transacciones_resumen  x  clientes_loyalty     (id_cliente)
-                       x  variables_exogenas   (fecha + tienda)
-                       x  intensidad de promociones_activas (fecha + tienda)
-```
 
-El resultado es una fila por ticket enriquecida con perfil del cliente (edad,
-segmento, antigüedad), condiciones exógenas (clima, tráfico, índice de competencia)
-y el número de promociones activas.
-
-Código: `cases/masters.py::build_master_c`.
+> `promociones_activas` se expande a días y se cuenta por `(fecha, id_tienda)` (→
+> `n_promos_activas`) **antes** de unirse, para no duplicar tickets.
 
 ## Modelos y validación
 

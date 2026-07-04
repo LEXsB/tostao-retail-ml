@@ -22,20 +22,59 @@ patrones de compra no evidentes. El objetivo es proponer los **Top-5 combos** po
 cluster de tiendas, con su precio y el **lift** esperado, filtrando el ruido de
 artículos de alta frecuencia y baja correlación específica.
 
-## Datos y tabla maestra
+## Datos, cruces y tabla maestra
 
-Se cruzan las tres fuentes de `02_product_bundles`:
+**Tabla de hechos (grano base):** `detalle_tickets` — una fila por **línea de ticket**
+(un producto dentro de un ticket; 18.376 filas). Se enganchan con **LEFT JOIN** las
+dos fuentes de `02_product_bundles`:
 
-```
-detalle_tickets  x  tickets            (id_ticket)
-                 x  catalogo_productos (id_producto)
-```
+| # | Fuente unida | Llave del cruce | Cardinalidad | Aporta | Cobertura |
+|---|--------------|-----------------|--------------|--------|-----------|
+| 1 | `tickets` (cabecera) | `id_ticket` | N:1 | fecha, tienda, cliente | 100 % |
+| 2 | `catalogo_productos` | `id_producto` | N:1 | nombre, categoría, subcategoría | 100 % |
 
-El resultado es una fila por línea de ticket enriquecida (cabecera + catálogo). De
-ahí se arma la **matriz de cestas** (ticket x producto, booleana) para la minería
-de patrones.
+**Cómo se decidió (y por qué así).** El **detalle** (las líneas de venta) es el hecho;
+a cada línea le pego su **cabecera** (para saber cuándo, dónde y quién) por `id_ticket`
+y el **catálogo** (para saber qué es el producto) por `id_producto`. Ambas son
+dimensiones **únicas en su llave** (10.000 tickets, 35 productos), así que los cruces
+son **N:1** y no multiplican líneas. Uso LEFT JOIN para no perder ninguna línea de
+venta.
+
+**Resultado verificado (sin duplicidad, sin cruces vacíos).**
+
+- **Sin duplicidad:** la maestra tiene **18.376 filas = exactamente las del detalle**.
+- **Sin cruces vacíos:** **cobertura 100 %** en ambas uniones (cada línea tiene su
+  cabecera y su producto).
+- De la maestra se arma la **matriz de cestas** `ticket × producto` (10.000 × 35,
+  booleana, índice único por ticket), insumo del FP-Growth.
 
 Código: `cases/masters.py::build_master_b` y `build_baskets_b`.
+
+### Diagrama entidad-relación (ERD)
+
+```mermaid
+erDiagram
+    TICKETS ||--o{ DETALLE_TICKETS : "id_ticket"
+    CATALOGO_PRODUCTOS ||--o{ DETALLE_TICKETS : "id_producto"
+    DETALLE_TICKETS {
+        string id_ticket FK
+        string id_producto FK
+        int cantidad
+        float precio_unitario
+    }
+    TICKETS {
+        string id_ticket PK
+        date fecha
+        string id_tienda
+        string id_cliente
+    }
+    CATALOGO_PRODUCTOS {
+        string id_producto PK
+        string nombre
+        string categoria
+        string subcategoria
+    }
+```
 
 ## Modelos y validación (dos enfoques complementarios)
 
