@@ -68,6 +68,26 @@ están en su propio README):
 - **Reproducibilidad total.** El entorno se fija con `uv` + lockfile (Python 3.13) y
   semillas globales deterministas.
 
+## Cruces de las tablas maestras (resumen)
+
+Cada caso construye **una tabla maestra** partiendo de su **tabla de hechos** y
+uniéndole sus dimensiones con **LEFT JOIN** (para no perder ningún hecho). Las llaves
+salen del grano de cada dimensión; todas las dimensiones son **únicas en su llave**,
+por lo que los cruces son **N:1** y **no duplican** filas.
+
+| Caso | Hecho (grano) | Dimensiones y llaves | Resultado verificado |
+|------|---------------|----------------------|----------------------|
+| **A** | `ventas_historicas` (fecha × tienda × producto) | catálogo (`id_producto`), tiendas (`id_tienda`), inventario y tendencia (`id_tienda + id_producto`) | 14.560 filas, **sin duplicidad**, cobertura **100 %** |
+| **B** | `detalle_tickets` (línea de ticket) | cabecera (`id_ticket`), catálogo (`id_producto`) | 18.376 filas, **sin duplicidad**, cobertura **100 %** |
+| **C** | `transacciones_resumen` (ticket) | loyalty (`id_cliente`), exógenas y promos (`fecha + id_tienda`) | 10.000 filas, **sin duplicidad**, integridad **100 %** (promo = penetración 98 %) |
+
+Cada cruce emite su **cobertura** (`join_report`) como control de integridad, y la
+maestra conserva exactamente las filas del hecho (sin *fan-out*). Un caso especial: en
+el Caso C las promociones son **rangos de fecha**, así que se pre-agregan a una
+**intensidad** por `(fecha, tienda)` antes de unir, para no duplicar tickets. El
+detalle de cada cruce, con su **diagrama entidad-relación (ERD)**, está en
+[Caso A](docs/caso_a.md), [Caso B](docs/caso_b.md) y [Caso C](docs/caso_c.md).
+
 ## Arquitectura
 
 ```text
