@@ -25,21 +25,79 @@ capital. El objetivo es (1) pronosticar la demanda semanal por SKU-tienda y (2)
 decidir la cantidad de pedido que minimiza el costo total esperado, usando la
 incertidumbre del modelo y los márgenes del producto.
 
-## Datos y tabla maestra
+## Datos, cruces y tabla maestra
 
-Se cruzan las cinco fuentes de `01_supply_optimization` en una tabla maestra:
+**Tabla de hechos (grano base):** `ventas_historicas` — una fila por **fecha ×
+tienda × producto** (14.560 filas, sin duplicados en esa llave). Sobre ella se
+enganchan, con **LEFT JOIN**, las cuatro dimensiones de `01_supply_optimization`:
 
+| # | Fuente unida | Llave del cruce | Cardinalidad | Aporta | Cobertura |
+|---|--------------|-----------------|--------------|--------|-----------|
+| 1 | `catalogo_productos` | `id_producto` | N:1 | nombre, categoría, costo, precio, costo de almacenamiento | 100 % |
+| 2 | `maestro_tiendas` | `id_tienda` | N:1 | ciudad, tamaño | 100 % |
+| 3 | `inventario_actual` | `id_tienda + id_producto` | N:1 | stock actual | 100 % |
+| 4 | `ground_truth_trends` | `id_tienda + id_producto` | N:1 | tipo de tendencia | 100 % |
+
+**Cómo se decidió (y por qué así).** Tomé la **tabla de hechos como base** y uní las
+dimensiones con **LEFT JOIN**, para que **ninguna venta se pierda** aunque a una
+fuente le faltara una fila. Las llaves salen del **grano** de cada dimensión: un
+producto es único por `id_producto`, una tienda por `id_tienda`, y tanto el
+inventario como la tendencia existen **por par tienda-producto**, por eso su llave es
+compuesta. Cada dimensión es **única en su llave** (catálogo 8, tiendas 20, inventario
+160 = 20 × 8, tendencias 160), de modo que los cruces son **N:1** (muchos hechos → una
+dimensión) y no pueden multiplicar filas.
+
+**Resultado verificado (sin duplicidad, sin cruces vacíos).**
+
+- **Sin duplicidad:** la maestra tiene **14.560 filas = exactamente las del hecho**;
+  ningún join multiplicó filas (dimensiones únicas ⇒ cardinalidad N:1).
+- **Sin cruces vacíos:** la **cobertura es 100 %** en las cuatro uniones
+  (`join_report`): cada venta encontró su producto, su tienda, su inventario y su
+  tendencia.
+- La maestra diaria se agrega luego a **grano semanal por SKU-tienda** (2.080 filas,
+  llave única `tienda + producto + año + semana`), el grano de la decisión de
+  reposición.
+
+Código: `cases/masters.py::build_master_a` y `aggregate_weekly_a`. La cobertura se
+emite como artefacto (`a_join_report`).
+
+### Diagrama entidad-relación (ERD)
+
+```mermaid
+erDiagram
+    CATALOGO_PRODUCTOS ||--o{ VENTAS_HISTORICAS : "id_producto"
+    MAESTRO_TIENDAS ||--o{ VENTAS_HISTORICAS : "id_tienda"
+    INVENTARIO_ACTUAL ||--o{ VENTAS_HISTORICAS : "id_tienda + id_producto"
+    GROUND_TRUTH_TRENDS ||--o{ VENTAS_HISTORICAS : "id_tienda + id_producto"
+    VENTAS_HISTORICAS {
+        string id_tienda FK
+        string id_producto FK
+        date fecha
+        int unidades_vendidas
+    }
+    CATALOGO_PRODUCTOS {
+        string id_producto PK
+        string nombre
+        string categoria
+        float precio_venta
+        float costo_unitario
+    }
+    MAESTRO_TIENDAS {
+        string id_tienda PK
+        string ciudad
+        float tamano_m2
+    }
+    INVENTARIO_ACTUAL {
+        string id_tienda PK
+        string id_producto PK
+        float stock_actual
+    }
+    GROUND_TRUTH_TRENDS {
+        string id_tienda PK
+        string id_producto PK
+        string trend_type
+    }
 ```
-ventas_historicas  x  catalogo_productos (producto)
-                   x  maestro_tiendas    (tienda)
-                   x  inventario_actual  (tienda + producto)
-                   x  ground_truth_trends(tienda + producto)
-```
-
-El resultado diario se agrega a grano **semanal por SKU-tienda** (el grano de la
-decisión de reposición). Cada cruce reporta su cobertura; en estos datos es 100 %.
-
-Código: `cases/masters.py::build_master_a` y `aggregate_weekly_a`.
 
 ## Features
 
