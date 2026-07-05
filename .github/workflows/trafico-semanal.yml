@@ -1,0 +1,35 @@
+name: Resumen de trafico (semanal)
+
+# Cada lunes abre un issue con las VISTAS y CLONES agregados de los ultimos 14 dias
+# (unico dato que GitHub expone; es anonimo, sin identidad de quien entra o clona).
+# El issue menciona al dueno, asi que GitHub envia el correo.
+#
+# Requiere el secret TRAFFIC_TOKEN: un Personal Access Token con scope 'repo'
+# (la API de trafico exige acceso push). Si el secret no existe, el job se omite
+# sin fallar.
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  resumen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vistas y clones (14 dias)
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "Falta el secret TRAFFIC_TOKEN (PAT con scope 'repo'). Se omite el resumen; crea el secret para activarlo."
+            exit 0
+          fi
+          V=$(gh api "repos/$REPO/traffic/views" --jq '"\(.count) vistas, \(.uniques) visitantes unicos"')
+          C=$(gh api "repos/$REPO/traffic/clones" --jq '"\(.count) clones, \(.uniques) clonadores unicos"')
+          BODY=$(printf '@%s — trafico de los ultimos 14 dias (agregado y anonimo por GitHub):\n\n- Vistas: %s\n- Clones: %s\n\nDetalle sin identidad en Insights -> Traffic.' "$OWNER" "$V" "$C")
+          gh issue create --title "Resumen de trafico — $(date -u '+%Y-%m-%d')" --body "$BODY"
