@@ -1,0 +1,35 @@
+name: Avisos (fork / star)
+
+# Notifica al dueno del repo cuando alguien hace fork o marca star, creando un
+# issue que lo menciona (GitHub envia el correo). GitHub NO permite notificar
+# vistas ni clones con identidad; para eso ver el workflow de resumen de trafico.
+on:
+  fork:
+  watch:
+    types: [started]
+
+permissions:
+  issues: write
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear issue de aviso
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENTO: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ "$EVENTO" = "fork" ]; then
+            TITULO="Nuevo fork por @$ACTOR"
+            ACCION="hizo fork del repositorio"
+          else
+            TITULO="Nueva star por @$ACTOR"
+            ACCION="marco el repositorio con star"
+          fi
+          CUANDO=$(date -u '+%Y-%m-%d %H:%M UTC')
+          gh issue create \
+            --title "$TITULO" \
+            --body "@$OWNER — el usuario @$ACTOR $ACCION ($CUANDO). Evento: $EVENTO."

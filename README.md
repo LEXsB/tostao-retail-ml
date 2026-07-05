@@ -1,5 +1,7 @@
 # tostao-retail-ml
 
+[![CI](https://github.com/LEXsB/tostao-retail-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/LEXsB/tostao-retail-ml/actions/workflows/ci.yml)
+
 Este repositorio implementa una **plataforma de ciencia de datos y machine learning
 de grado producción** para una cadena de retail. No se trata de un notebook de
 prueba, sino de un producto de software modular, reutilizable, probado y desplegable,
